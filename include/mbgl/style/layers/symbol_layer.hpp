@@ -8,8 +8,8 @@
 #include <mbgl/style/filter.hpp>
 #include <mbgl/style/property_value.hpp>
 #include <mbgl/style/expression/formatted.hpp>
-#include <mbgl/util/color.hpp>
 #include <mbgl/util/variable_anchor_offset_collection.hpp>
+#include <mbgl/util/color.hpp>
 
 #include <vector>
 
@@ -185,13 +185,13 @@ public:
     const PropertyValue<std::vector<TextVariableAnchorType>>& getTextVariableAnchor() const;
     void setTextVariableAnchor(const PropertyValue<std::vector<TextVariableAnchorType>>&);
 
-    static PropertyValue<std::vector<TextWritingModeType>> getDefaultTextWritingMode();
-    const PropertyValue<std::vector<TextWritingModeType>>& getTextWritingMode() const;
-    void setTextWritingMode(const PropertyValue<std::vector<TextWritingModeType>>&);
-
     static PropertyValue<VariableAnchorOffsetCollection> getDefaultTextVariableAnchorOffset();
     const PropertyValue<VariableAnchorOffsetCollection>& getTextVariableAnchorOffset() const;
     void setTextVariableAnchorOffset(const PropertyValue<VariableAnchorOffsetCollection>&);
+
+    static PropertyValue<std::vector<TextWritingModeType>> getDefaultTextWritingMode();
+    const PropertyValue<std::vector<TextWritingModeType>>& getTextWritingMode() const;
+    void setTextWritingMode(const PropertyValue<std::vector<TextWritingModeType>>&);
 
     // Paint properties
 

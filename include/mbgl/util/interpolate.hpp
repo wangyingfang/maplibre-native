@@ -131,27 +131,36 @@ public:
 template <>
 struct Interpolator<VariableAnchorOffsetCollection> {
 public:
-    VariableAnchorOffsetCollection operator()(const VariableAnchorOffsetCollection& a, const VariableAnchorOffsetCollection& b, const float t) noexcept {
+    VariableAnchorOffsetCollection operator()(const VariableAnchorOffsetCollection& a,
+                                              const VariableAnchorOffsetCollection& b,
+                                              const float t) noexcept {
         auto aOffsets = a.getOffsets();
         auto bOffsets = b.getOffsets();
-        if (aOffsets.size() != bOffsets.size())
-        {
-            throw std::runtime_error("Cannot interpolate values of different length. from: " + a.toString() + ", to: " + b.toString());
+        if (aOffsets.size() != bOffsets.size()) {
+            // BUGBUG
+            // throw std::runtime_error("Cannot interpolate values of different length. from: " + a.toString() + ", to:
+            // " + b.toString());
+            return VariableAnchorOffsetCollection();
         }
-        
+
         std::vector<AnchorOffsetPair> offsetMap;
-        for (auto index = 0; index < aOffsets.size(); index++) {
+        for (size_t index = 0; index < aOffsets.size(); index++) {
             auto aPair = std::next(aOffsets.begin(), index);
             auto bPair = std::next(bOffsets.begin(), index);
             if (aPair->first != bPair->first) {
-                throw std::runtime_error("Cannot interpolate values containing mismatched anchors. index:" + util::toString(index) + "from: " + Enum<style::SymbolAnchorType>::toString(aPair->first) + ", to:" + Enum<style::SymbolAnchorType>::toString(bPair->first));
+                // BUGBUG
+                // throw std::runtime_error("Cannot interpolate values containing mismatched anchors. index:" +
+                // util::toString(index) + "from: " + Enum<style::SymbolAnchorType>::toString(aPair->first) + ", to:" +
+                // Enum<style::SymbolAnchorType>::toString(bPair->first));
+                return VariableAnchorOffsetCollection();
             }
-            
-            auto offset = std::array<float, 2>{ interpolate(aPair->second[0], bPair->second[0], t), interpolate(aPair->second[1], bPair->second[1], t) };
+
+            auto offset = std::array<float, 2>{interpolate(aPair->second[0], bPair->second[0], t),
+                                               interpolate(aPair->second[1], bPair->second[1], t)};
             AnchorOffsetPair anchorOffset = {aPair->first, offset};
             offsetMap.emplace_back(anchorOffset);
         }
-        
+
         return VariableAnchorOffsetCollection(offsetMap);
     }
 };

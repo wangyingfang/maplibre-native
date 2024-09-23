@@ -648,7 +648,6 @@ void SymbolLayer::setTextTransform(const PropertyValue<TextTransformType>& value
     baseImpl = std::move(impl_);
     observer->onLayerChanged(*this);
 }
-
 PropertyValue<std::vector<TextVariableAnchorType>> SymbolLayer::getDefaultTextVariableAnchor() {
     return TextVariableAnchor::defaultValue();
 }
@@ -664,7 +663,6 @@ void SymbolLayer::setTextVariableAnchor(const PropertyValue<std::vector<TextVari
     baseImpl = std::move(impl_);
     observer->onLayerChanged(*this);
 }
-
 PropertyValue<VariableAnchorOffsetCollection> SymbolLayer::getDefaultTextVariableAnchorOffset() {
     return TextVariableAnchorOffset::defaultValue();
 }
@@ -680,7 +678,6 @@ void SymbolLayer::setTextVariableAnchorOffset(const PropertyValue<VariableAnchor
     baseImpl = std::move(impl_);
     observer->onLayerChanged(*this);
 }
-
 PropertyValue<std::vector<TextWritingModeType>> SymbolLayer::getDefaultTextWritingMode() {
     return TextWritingMode::defaultValue();
 }
@@ -1371,8 +1368,8 @@ StyleProperty getLayerProperty(const SymbolLayer& layer, Property property) {
             return makeStyleProperty(layer.getTextTransform());
         case Property::TextVariableAnchor:
             return makeStyleProperty(layer.getTextVariableAnchor());
-      case Property::TextVariableAnchorOffset:
-          return makeStyleProperty(layer.getTextVariableAnchorOffset());
+        case Property::TextVariableAnchorOffset:
+            return makeStyleProperty(layer.getTextVariableAnchorOffset());
         case Property::TextWritingMode:
             return makeStyleProperty(layer.getTextWritingMode());
     }
@@ -1805,13 +1802,12 @@ std::optional<Error> SymbolLayer::setPropertyInternal(const std::string& name, c
     }
     if (property == Property::TextVariableAnchorOffset) {
         Error error;
-        const auto& typedValue =
-            convert<PropertyValue<VariableAnchorOffsetCollection>(value, error, false, false);
+        const auto& typedValue = convert<PropertyValue<VariableAnchorOffsetCollection>>(value, error, true, false);
         if (!typedValue) {
             return error;
         }
 
-        setTextVariableAnchor(*typedValue);
+        setTextVariableAnchorOffset(*typedValue);
         return std::nullopt;
     }
     if (property == Property::TextWritingMode) {
