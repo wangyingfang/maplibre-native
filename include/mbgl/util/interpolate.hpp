@@ -8,6 +8,7 @@
 #include <mbgl/util/color.hpp>
 #include <mbgl/util/range.hpp>
 #include <mbgl/util/string.hpp>
+#include <mbgl/util/variable_anchor_offset_collection.hpp>
 
 #include <array>
 #include <vector>
@@ -133,14 +134,12 @@ struct Interpolator<VariableAnchorOffsetCollection> {
 public:
     VariableAnchorOffsetCollection operator()(const VariableAnchorOffsetCollection& a,
                                               const VariableAnchorOffsetCollection& b,
-                                              const float t) noexcept {
+                                              const float t) {
         auto aOffsets = a.getOffsets();
         auto bOffsets = b.getOffsets();
         if (aOffsets.size() != bOffsets.size()) {
-            // BUGBUG
-            // throw std::runtime_error("Cannot interpolate values of different length. from: " + a.toString() + ", to:
-            // " + b.toString());
-            return VariableAnchorOffsetCollection();
+            throw std::runtime_error("Cannot interpolate values of different length. from: " + a.toString() +
+                                     ", to: " + b.toString());
         }
 
         std::vector<AnchorOffsetPair> offsetMap;
@@ -148,11 +147,10 @@ public:
             auto aPair = std::next(aOffsets.begin(), index);
             auto bPair = std::next(bOffsets.begin(), index);
             if (aPair->first != bPair->first) {
-                // BUGBUG
-                // throw std::runtime_error("Cannot interpolate values containing mismatched anchors. index:" +
-                // util::toString(index) + "from: " + Enum<style::SymbolAnchorType>::toString(aPair->first) + ", to:" +
-                // Enum<style::SymbolAnchorType>::toString(bPair->first));
-                return VariableAnchorOffsetCollection();
+                throw std::runtime_error(
+                    "Cannot interpolate values containing mismatched anchors. index: " + util::toString(index) +
+                    "from: " + Enum<style::SymbolAnchorType>::toString(aPair->first) +
+                    ", to: " + Enum<style::SymbolAnchorType>::toString(bPair->first));
             }
 
             auto offset = std::array<float, 2>{interpolate(aPair->second[0], bPair->second[0], t),

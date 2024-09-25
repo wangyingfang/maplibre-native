@@ -397,8 +397,6 @@ std::optional<VariableAnchorOffsetCollection> SymbolLayout::getTextVariableAncho
     } else {
         const std::vector<TextVariableAnchorType> variableTextAnchor = layout->evaluate<TextVariableAnchor>(
             zoom, feature, canonicalID);
-        // BUGBUG unused
-        // const SymbolAnchorType textAnchor = layout->evaluate<TextAnchor>(zoom, feature, canonicalID);
         if (!variableTextAnchor.empty()) {
             if (!textRadialOffset.isUndefined()) {
                 variableTextOffset = {{layout->evaluate<TextRadialOffset>(zoom, feature, canonicalID) * util::ONE_EM,
@@ -429,9 +427,9 @@ std::optional<VariableAnchorOffsetCollection> SymbolLayout::getTextVariableAncho
 std::vector<style::TextVariableAnchorType> SymbolLayout::getTextVariableAnchors(const SymbolFeature& feature) {
     std::vector<style::TextVariableAnchorType> textVariableAnchors;
     // BUGBUG bad name, missing const
-    auto textVariableAnchorOffset1 = getTextVariableAnchorOffset(feature);
-    if (textVariableAnchorOffset1) {
-        for (const auto& anchorOffset : textVariableAnchorOffset1->getOffsets()) {
+    auto variableAnchorOffsets = getTextVariableAnchorOffset(feature);
+    if (variableAnchorOffsets) {
+        for (const auto& anchorOffset : variableAnchorOffsets->getOffsets()) {
             textVariableAnchors.push_back(anchorOffset.first);
         }
     }
@@ -651,7 +649,7 @@ void SymbolLayout::addFeature(const std::size_t layoutFeatureIndex,
     const float iconRotation = layout->evaluate<IconRotate>(zoom, feature, canonicalID);
     const float textRotation = layout->evaluate<TextRotate>(zoom, feature, canonicalID);
     // BUGBUG why copy? missing const
-    auto textVariableAnchorOffset1 = getTextVariableAnchorOffset(feature);
+    auto variableAnchorOffsets = getTextVariableAnchorOffset(feature);
 
     const SymbolPlacementType textPlacement = layout->get<TextRotationAlignment>() != AlignmentType::Map
                                                   ? SymbolPlacementType::Point
@@ -709,7 +707,7 @@ void SymbolLayout::addFeature(const std::size_t layoutFeatureIndex,
                                          overscaling,
                                          iconRotation,
                                          textRotation,
-                                         textVariableAnchorOffset1,
+                                         variableAnchorOffsets,
                                          allowVerticalPlacement,
                                          iconType);
 
