@@ -112,10 +112,11 @@ private:
                                          const SymbolFeature&,
                                          std::size_t sectionIndex,
                                          const CanonicalTileID& canonical);
-    
-    // Helper to support both text-variable-anchor and text-variable-anchor-offset. Offset values converted from EMs to PXs
+
+    // Helper to support both text-variable-anchor and text-variable-anchor-offset. Offset values converted from EMs to
+    // PXs
     std::optional<VariableAnchorOffsetCollection> getTextVariableAnchorOffset(const SymbolFeature&);
-    
+
     std::vector<style::TextVariableAnchorType> getTextVariableAnchors(const SymbolFeature&);
 
     // Stores the layer so that we can hold on to GeometryTileFeature instances
@@ -140,7 +141,8 @@ private:
     style::TextSize::UnevaluatedType textSize;
     style::IconSize::UnevaluatedType iconSize;
     style::TextRadialOffset::UnevaluatedType textRadialOffset;
-    style::TextVariableAnchorOffset::UnevaluatedType textVariableAnchorOffset;
+    style::TextVariableAnchorOffset::UnevaluatedType
+        textVariableAnchorOffset; // BUGBUG Why copy it here? it's not really doing anything.
     Immutable<style::SymbolLayoutProperties::PossiblyEvaluated> layout;
     std::vector<SymbolFeature> features;
 

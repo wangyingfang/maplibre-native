@@ -1802,8 +1802,7 @@ std::optional<Error> SymbolLayer::setPropertyInternal(const std::string& name, c
     }
     if (property == Property::TextVariableAnchorOffset) {
         Error error;
-        const auto& typedValue =
-            convert<PropertyValue<VariableAnchorOffsetCollection>>(value, error, false, false);
+        const auto& typedValue = convert<PropertyValue<VariableAnchorOffsetCollection>>(value, error, true, false);
         if (!typedValue) {
             return error;
         }
