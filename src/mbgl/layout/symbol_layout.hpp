@@ -117,8 +117,6 @@ private:
     // PXs
     std::optional<VariableAnchorOffsetCollection> getTextVariableAnchorOffset(const SymbolFeature&);
 
-    std::vector<style::TextVariableAnchorType> getTextVariableAnchors(const SymbolFeature&);
-
     // Stores the layer so that we can hold on to GeometryTileFeature instances
     // in SymbolFeature, which may reference data from this object.
     const std::unique_ptr<GeometryTileLayer> sourceLayer;
