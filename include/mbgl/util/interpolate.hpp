@@ -155,11 +155,10 @@ public:
 
             auto offset = std::array<float, 2>{interpolate(aPair->second[0], bPair->second[0], t),
                                                interpolate(aPair->second[1], bPair->second[1], t)};
-            AnchorOffsetPair anchorOffset = {aPair->first, offset};
-            offsetMap.emplace_back(anchorOffset);
+            offsetMap.emplace_back(aPair->first, offset);
         }
 
-        return VariableAnchorOffsetCollection(offsetMap);
+        return VariableAnchorOffsetCollection(std::move(offsetMap));
     }
 };
 

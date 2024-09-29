@@ -65,32 +65,6 @@ const CollisionGroups::CollisionGroup& CollisionGroups::get(const std::string& s
 
 using namespace style;
 
-// BUGBUG move functions somewhere?
-bool hasVariableTextAnchors(const style::SymbolLayoutProperties::PossiblyEvaluated& layout) {
-    if (layout.get<TextVariableAnchor>().empty()) {
-        const auto tvao = layout.get<TextVariableAnchorOffset>();
-        if (!tvao.isConstant()) {
-            return true;
-        }
-        const auto constValue = tvao.constant();
-        return constValue && !constValue->empty();
-    }
-
-    return true;
-}
-
-std::vector<style::SymbolAnchorType> getAnchors(
-    const std::optional<VariableAnchorOffsetCollection>& variableAnchorOffset) {
-    std::vector<style::SymbolAnchorType> result;
-    if (variableAnchorOffset) {
-        for (const auto& anchorOffset : variableAnchorOffset->getOffsets()) {
-            result.push_back(anchorOffset.first);
-        }
-    }
-
-    return result;
-}
-
 // PlacementContext implemenation
 class PlacementContext {
     std::reference_wrapper<const SymbolBucket> bucket;
