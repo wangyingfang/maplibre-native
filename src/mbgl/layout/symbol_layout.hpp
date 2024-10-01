@@ -139,7 +139,6 @@ private:
     style::TextSize::UnevaluatedType textSize;
     style::IconSize::UnevaluatedType iconSize;
     style::TextRadialOffset::UnevaluatedType textRadialOffset;
-    // BUGBUG Why copy it here? it's not really doing anything.
     style::TextVariableAnchorOffset::UnevaluatedType textVariableAnchorOffset;
     Immutable<style::SymbolLayoutProperties::PossiblyEvaluated> layout;
     std::vector<SymbolFeature> features;
