@@ -100,6 +100,34 @@ void Drawable::setCullFaceMode(const gfx::CullFaceMode& mode) {
     impl->pipelineInfo.setCullMode(mode);
 }
 
+void Drawable::updateVertexAttributes(gfx::VertexAttributeArrayPtr vertices,
+                                      std::size_t vertexCount,
+                                      gfx::DrawMode mode,
+                                      gfx::IndexVectorBasePtr indexes,
+                                      const SegmentBase* segments,
+                                      std::size_t segmentCount) {
+    gfx::Drawable::setVertexAttributes(std::move(vertices));
+    impl->vertexCount = vertexCount;
+
+    std::vector<std::unique_ptr<Drawable::DrawSegment>> drawSegs;
+    drawSegs.reserve(segmentCount);
+    for (std::size_t i = 0; i < segmentCount; ++i) {
+        const auto& seg = segments[i];
+        auto segCopy = SegmentBase{
+            // no copy constructor
+            seg.vertexOffset,
+            seg.indexOffset,
+            seg.vertexLength,
+            seg.indexLength,
+            seg.sortKey,
+        };
+        drawSegs.push_back(std::make_unique<Drawable::DrawSegment>(mode, std::move(segCopy)));
+    }
+
+    impl->indexes = std::move(indexes);
+    impl->segments = std::move(drawSegs);
+}
+
 void Drawable::upload(gfx::UploadPass& uploadPass_) {
     if (isCustom) {
         return;
@@ -116,13 +144,13 @@ void Drawable::upload(gfx::UploadPass& uploadPass_) {
 
     // We need either raw index data or a buffer already created from them.
     // We can have a buffer and no indexes, but only if it's not marked dirty.
-    if (!impl->indexes || (impl->indexes->empty() &&
-                           (!impl->indexes->getBuffer() || impl->indexes->isModifiedAfter(attributeUpdateTime)))) {
+    if (!impl->indexes || (impl->indexes->empty() && (!impl->indexes->getBuffer() || !attributeUpdateTime ||
+                                                      impl->indexes->isModifiedAfter(*attributeUpdateTime)))) {
         assert(!"Missing index data");
         return;
     }
 
-    if (!impl->indexes->getBuffer() || impl->indexes->isModifiedAfter(attributeUpdateTime)) {
+    if (!impl->indexes->getBuffer() || !attributeUpdateTime || impl->indexes->isModifiedAfter(*attributeUpdateTime)) {
         // Create a buffer for the index data.  We don't update any
         // existing buffer because it may still be in use by the previous frame.
         auto indexBufferResource{uploadPass.createIndexBufferResource(
@@ -134,7 +162,8 @@ void Drawable::upload(gfx::UploadPass& uploadPass_) {
         impl->indexes->setBuffer(std::move(buffer));
     }
 
-    const bool buildAttribs = !vertexAttributes || vertexAttributes->isModifiedAfter(attributeUpdateTime) ||
+    const bool buildAttribs = !vertexAttributes || !attributeUpdateTime ||
+                              vertexAttributes->isModifiedAfter(*attributeUpdateTime) ||
                               impl->pipelineInfo.inputAttributes.empty();
 
     if (buildAttribs) {
@@ -166,7 +195,8 @@ void Drawable::upload(gfx::UploadPass& uploadPass_) {
     }
 
     // build instance buffer
-    const bool buildInstanceBuffer = (instanceAttributes && instanceAttributes->isModifiedAfter(attributeUpdateTime));
+    const bool buildInstanceBuffer =
+        (instanceAttributes && (!attributeUpdateTime || instanceAttributes->isModifiedAfter(*attributeUpdateTime)));
 
     if (buildInstanceBuffer) {
         // Build instance attribute buffers
@@ -187,8 +217,6 @@ void Drawable::upload(gfx::UploadPass& uploadPass_) {
         if (impl->instanceBindings != instanceBindings_) {
             impl->instanceBindings = std::move(instanceBindings_);
         }
-
-        attributeUpdateTime = util::MonotonicTimer::now();
     }
 
     if (buildAttribs || buildInstanceBuffer) {
@@ -201,6 +229,8 @@ void Drawable::upload(gfx::UploadPass& uploadPass_) {
     if (texturesNeedUpload) {
         uploadTextures(uploadPass);
     }
+
+    attributeUpdateTime = util::MonotonicTimer::now();
 }
 
 void Drawable::draw(PaintParameters& parameters) const {
@@ -247,7 +277,7 @@ void Drawable::draw(PaintParameters& parameters) const {
         // update pipeline info with per segment modifiers
         impl->pipelineInfo.setDrawMode(seg->getMode());
 
-        impl->pipelineInfo.setDynamicValues(commandBuffer);
+        impl->pipelineInfo.setDynamicValues(context.getBackend(), commandBuffer);
 
         const auto& pipeline = shaderImpl.getPipeline(impl->pipelineInfo);
         commandBuffer->bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.get());

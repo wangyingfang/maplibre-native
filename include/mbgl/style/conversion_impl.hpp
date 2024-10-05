@@ -317,7 +317,14 @@ struct ValueFactory<Color> {
 
 template <>
 struct ValueFactory<VariableAnchorOffsetCollection> {
-    static Value make(const VariableAnchorOffsetCollection& variableAnchorOffset) { return variableAnchorOffset.serialize(); }
+    static Value make(const VariableAnchorOffsetCollection& variableAnchorOffset) {
+        return variableAnchorOffset.serialize();
+    }
+};
+
+template <>
+struct ValueFactory<Padding> {
+    static Value make(const Padding& padding) { return padding.serialize(); }
 };
 
 template <typename T>
@@ -366,13 +373,17 @@ Value makeValue(T&& arg) {
 
 template <typename T>
 StyleProperty makeStyleProperty(const PropertyValue<T>& value) {
-    return value.match([](const Undefined&) -> StyleProperty { return {}; },
-                       [](const Color& c) -> StyleProperty { return {makeValue(c), StyleProperty::Kind::Expression}; },
-                       [](const VariableAnchorOffsetCollection& v) -> StyleProperty { return {makeValue(v), StyleProperty::Kind::Expression}; },
-                       [](const PropertyExpression<T>& fn) -> StyleProperty {
-                           return {fn.getExpression().serialize(), StyleProperty::Kind::Expression};
-                       },
-                       [](const auto& t) -> StyleProperty { return {makeValue(t), StyleProperty::Kind::Constant}; });
+    return value.match(
+        [](const Undefined&) -> StyleProperty { return {}; },
+        [](const Color& c) -> StyleProperty { return {makeValue(c), StyleProperty::Kind::Expression}; },
+        [](const Padding& p) -> StyleProperty { return {makeValue(p), StyleProperty::Kind::Expression}; },
+        [](const PropertyExpression<T>& fn) -> StyleProperty {
+            return {fn.getExpression().serialize(), StyleProperty::Kind::Expression};
+        },
+        [](const VariableAnchorOffsetCollection& v) -> StyleProperty {
+            return {makeValue(v), StyleProperty::Kind::Expression};
+        },
+        [](const auto& t) -> StyleProperty { return {makeValue(t), StyleProperty::Kind::Constant}; });
 }
 
 inline StyleProperty makeStyleProperty(const TransitionOptions& value) {
