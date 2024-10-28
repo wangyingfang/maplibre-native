@@ -216,7 +216,7 @@ class MainActivity : ComponentActivity() {
 
     private fun loadStyle(darkMode: Boolean): String =
         try {
-            val styleId = if (darkMode) R.raw.bing_maps_v9_china_dark else R.raw.bing_maps_v9_china
+            val styleId = if (darkMode) R.raw.bing_maps_v9_china_dark_1 else R.raw.bing_maps_v9_china_1
             ResourceUtils.readRawResource(this, styleId)
         } catch (exception: Exception) {
             Timber.e(exception, "Can't load local file style")
