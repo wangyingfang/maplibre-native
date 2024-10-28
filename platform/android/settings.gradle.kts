@@ -24,7 +24,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-include(":MapLibreAndroid", ":MapLibreAndroidTestApp", ":MapLibreAndroidLint")
+include(":MapLibreAndroid", ":MapLibreAndroidTestApp", ":MapLibreAndroidLint", ":MapToolsApp")
 
 rootProject.name = "MapLibre Native for Android"
 
@@ -37,3 +37,4 @@ val cppTestProjectDir = file("$rootDir/../../test/android")
 includeBuild(cppTestProjectDir) {
     name = "cppUnitTestsApp"
 }
+include(":MapToolsApp")

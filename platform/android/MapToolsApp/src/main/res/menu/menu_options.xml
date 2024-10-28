@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_action_styles"
+        android:title="Select styles">
+        <menu>
+            <item
+                android:id="@+id/menu_action_road_light_style"
+                android:title="Road light"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/menu_action_road_dark_style"
+                android:title="Road dark"
+                app:showAsAction="never" />
+        </menu>
+    </item>
+    <item
+        android:id="@+id/menu_action_filters"
+        android:title="Select filters"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/menu_action_filter_placeholder"
+                android:title="Placeholder" />
+        </menu>
+    </item>
+    <item
+        android:id="@+id/menu_action_test1"
+        android:title="Test1" />
+
+</menu>

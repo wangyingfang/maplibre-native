@@ -194,12 +194,17 @@ void Map::Impl::onDidFinishRenderingFrame(RenderMode renderMode,
 
         if (needsRepaint || transform.inTransition()) {
             onUpdate();
-        } else if (rendererFullyLoaded) {
-            observer.onDidBecomeIdle();
+        // NOTE Fire the idle event even error occurred.
+        // } else if (rendererFullyLoaded) {
+        //     observer.onDidBecomeIdle();
         }
     } else if (stillImageRequest && rendererFullyLoaded) {
         auto request = std::move(stillImageRequest);
         request->callback(nullptr);
+    }
+    // NOTE Fire the idle event even error occurred.
+    if (!needsRepaint && !transform.inTransition()) {
+        observer.onDidBecomeIdle();
     }
 }
 

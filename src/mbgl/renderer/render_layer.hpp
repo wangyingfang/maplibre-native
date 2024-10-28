@@ -12,6 +12,7 @@
 #include <mbgl/renderer/change_request.hpp>
 #include <mbgl/util/tiny_unordered_map.hpp>
 #endif // MLN_DRAWABLE_RENDERER
+#include <mbgl/geometry/feature_index.hpp>
 
 #include <list>
 #include <memory>
@@ -95,6 +96,11 @@ protected:
 
 public:
     virtual ~RenderLayer() = default;
+
+    // NOTE This method extracts extra properties from the feature.
+    virtual void evaluateLayoutExtras(const RefIndexedSubfeature& /*indexedFeature*/,
+                                                             mapbox::feature::property_map& /*properties*/,
+                                                             float /*zoom*/) const {}
 
     // Begin transitions for any properties that have changed since the last frame.
     virtual void transition(const TransitionParameters&) = 0;

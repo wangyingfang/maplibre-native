@@ -57,6 +57,13 @@ public class RasterLayer extends Layer {
     nativeSetSourceLayer(sourceLayer);
   }
 
+  // NOTE We need this property to filter layers.
+  @NonNull
+  public String getSourceLayer() {
+    checkThread();
+    return nativeGetSourceLayer();
+  }
+
   /**
    * Set the source Layer.
    *

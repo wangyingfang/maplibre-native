@@ -1326,4 +1326,92 @@ void RenderSymbolLayer::update(gfx::ShaderRegistry& shaders,
 
 #endif // MLN_DRAWABLE_RENDERER
 
+// NOTE Defined in 'mbgl/layout/symbol_projection.cpp'
+float evaluateSizeForFeature(const ZoomEvaluatedSize& zoomEvaluatedSize, const PlacedSymbol& placedSymbol);
+
+template<typename T>
+struct PropertyValueVisitor
+{
+    float zoom;
+    PropertyValueVisitor(float zoom_)
+        : zoom(zoom_) {}
+    std::optional<T> operator()(const T& constant_) {
+        return constant_;
+    }
+    std::optional<T> operator ()(const PropertyExpression<T>& expression) {
+        return !expression.isZoomConstant() ? expression.evaluate(zoom) : std::optional<T>();
+    }
+};
+
+void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexedFeature,
+                                                                    mapbox::feature::property_map& properties,
+                                                                    float zoom) const {
+    for (const RenderTile& tile : *renderTiles) {
+        auto bucket = (SymbolBucket*)tile.getBucket(*baseImpl);
+        auto renderData = tile.getLayerRenderData(*baseImpl);
+        if (!bucket || !renderData) {
+            continue;
+        }
+        // TODO The icon image name???
+        const auto& evaluated = getEvaluated<SymbolLayerProperties>(renderData->layerProperties);
+        auto textColor = evaluated.get<TextColor>().match(PropertyValueVisitor<Color>(zoom));
+        auto textHaloColor = evaluated.get<TextHaloColor>().match(PropertyValueVisitor<Color>(zoom));
+        auto textHaloWidth = evaluated.get<TextHaloWidth>().match(PropertyValueVisitor<float>(zoom));
+        auto iconColor = evaluated.get<IconColor>().match(PropertyValueVisitor<Color>(zoom));
+        auto iconHaloColor = evaluated.get<IconHaloColor>().match(PropertyValueVisitor<Color>(zoom));
+        auto iconHaloWidth = evaluated.get<IconHaloWidth>().match(PropertyValueVisitor<float>(zoom));
+
+        auto partiallyEvaluatedTextSize = bucket->textSizeBinder->evaluateForZoom(zoom);
+        auto partiallyEvaluatedIconSize = bucket->iconSizeBinder->evaluateForZoom(zoom);
+        for (const auto& symbolInstance : bucket->symbolInstances) {
+            auto index = symbolInstance.getDataFeatureIndex();
+            auto index2 = indexedFeature.getIndex();
+            if (index == index2) {
+                auto placedTextIndex = symbolInstance.getDefaultHorizontalPlacedTextIndex();
+                auto placedIconIndex = symbolInstance.getPlacedIconIndex();
+                if (placedTextIndex) {
+                    const PlacedSymbol& placedSymbol = bucket->text.placedSymbols.at(*placedTextIndex);
+                    const float textSize_ = evaluateSizeForFeature(partiallyEvaluatedTextSize, placedSymbol);
+                    properties.insert(std::make_pair("textSize", mapbox::feature::value(textSize_)));
+                    if (textColor)
+                        properties.insert(std::make_pair("textColor",
+                                                         std::vector{mapbox::feature::value(textColor->r),
+                                                                     mapbox::feature::value(textColor->g),
+                                                                     mapbox::feature::value(textColor->b),
+                                                                     mapbox::feature::value(textColor->a)}));
+                    if (textHaloWidth)
+                        properties.insert(std::make_pair("textHaloWidth", mapbox::feature::value(*textHaloWidth)));
+                    if (textHaloColor)
+                        properties.insert(std::make_pair("textHaloColor",
+                                                         std::vector{mapbox::feature::value(textHaloColor->r),
+                                                                     mapbox::feature::value(textHaloColor->g),
+                                                                     mapbox::feature::value(textHaloColor->b),
+                                                                     mapbox::feature::value(textHaloColor->a)}));
+                }
+                if (placedIconIndex) {
+                    const auto& iconBuffer = symbolInstance.hasSdfIcon() ? bucket->sdfIcon : bucket->icon;
+                    const PlacedSymbol& placedSymbol = iconBuffer.placedSymbols.at(*placedIconIndex);
+                    const float iconSize_ = evaluateSizeForFeature(partiallyEvaluatedIconSize, placedSymbol);
+                    properties.insert(std::make_pair("iconSize", mapbox::feature::value(iconSize_)));
+                    if (iconColor)
+                        properties.insert(std::make_pair("iconColor",
+                                                         std::vector{mapbox::feature::value(iconColor->r),
+                                                                     mapbox::feature::value(iconColor->g),
+                                                                     mapbox::feature::value(iconColor->b),
+                                                                     mapbox::feature::value(iconColor->a)}));
+                    if (iconHaloWidth)
+                        properties.insert(std::make_pair("iconHaloWidth", mapbox::feature::value(*iconHaloWidth)));
+                    if (iconHaloColor)
+                        properties.insert(std::make_pair("iconHaloColor",
+                                                         std::vector{mapbox::feature::value(iconHaloColor->r),
+                                                                     mapbox::feature::value(iconHaloColor->g),
+                                                                     mapbox::feature::value(iconHaloColor->b),
+                                                                     mapbox::feature::value(iconHaloColor->a)}));
+                }
+                return;
+            }
+        }
+    }
+}
+
 } // namespace mbgl

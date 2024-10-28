@@ -85,6 +85,10 @@ public:
     explicit RenderSymbolLayer(Immutable<style::SymbolLayer::Impl>);
     ~RenderSymbolLayer() override;
 
+    void evaluateLayoutExtras(const RefIndexedSubfeature& indexedFeature,
+                              mapbox::feature::property_map& properties,
+                              float zoom) const override;
+
     static style::IconPaintProperties::PossiblyEvaluated iconPaintProperties(
         const style::SymbolPaintProperties::PossiblyEvaluated&);
     static style::TextPaintProperties::PossiblyEvaluated textPaintProperties(

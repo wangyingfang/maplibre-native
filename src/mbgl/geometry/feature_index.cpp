@@ -298,6 +298,8 @@ void FeatureIndex::addFeature(std::unordered_map<std::string, std::vector<Featur
         }
 
         Feature feature = convertFeature(*geometryTileFeature, tileID);
+        // NOTE Extracts extra properties (use uint8 zoom)?
+        renderLayer->evaluateLayoutExtras(indexedFeature, feature.properties, tileID.z);
         feature.source = renderLayer->baseImpl->source;
         feature.sourceLayer = sourceLayer->getName();
         feature.state = state;
