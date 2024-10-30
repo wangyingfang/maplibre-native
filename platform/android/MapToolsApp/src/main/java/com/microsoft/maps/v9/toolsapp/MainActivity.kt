@@ -11,6 +11,8 @@ import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
@@ -30,6 +32,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var outputText: TextView
 
     private var status = ""
+    private var lastRequestedLabels = "[]"
 
     private val statusChanged = StatusChangedWatcher { status = it; updateOutput() }
 
@@ -179,7 +182,7 @@ class MainActivity : ComponentActivity() {
             val screenRect = RectF(0f, 0f, width, height)
             val screenCenter = PointF(width / 2 - 1, height / 2 - 1)
             val features = map.queryRenderedFeatures(screenRect)
-            features.filter {
+            val labels = features.filter {
                 it.geometry()?.type() == "Point"
                         && it.properties()?.get("name").isString()
                         && it.properties()?.get("textSize").isFloat()
@@ -188,22 +191,32 @@ class MainActivity : ComponentActivity() {
                 val geoPoint = it.geometry() as Point
                 val pixels = map.projection.toScreenLocation(LatLng(geoPoint.latitude(), geoPoint.longitude()))
                 val distanceInPixels = calculateDistance(screenCenter.x, screenCenter.y, pixels.x, pixels.y)
-
                 val props = it.properties()!!
-                val text = props.get("name").getStringOrDefault()
-                val secondText = props.get("sec-name").getStringOrDefault(props.get("name2").getStringOrDefault())
-                val textSize = props.get("textSize").getFloatOrDefault()
-                val textColor = props.get("textColor").getRgbaOrDefault()
-                val textHaloWidth = props.get("textHaloWidth").getFloatOrDefault()
-                val textHaloColor = props.get("textHaloColor").getRgbaOrDefault()
-                val iconSize = props.get("iconSize").getFloatOrDefault()
-                val iconColor = props.get("iconColor").getRgbaOrDefault()
-                val iconHaloWidth = props.get("iconHaloWidth").getFloatOrDefault()
-                val iconHaloColor = props.get("iconHaloColor").getRgbaOrDefault()
-                // TODO iconName???
-                // TODO sourceLayer???
-                true
+
+                mapOf(
+                    "l" to arrayOf(geoPoint.latitude(), geoPoint.longitude()),
+                    "d" to distanceInPixels,
+                    "lid" to props.get("layerId").getStringOrDefault(),
+                    "sl" to props.get("sourceLayer").getStringOrDefault(),
+                    // "t" to props.get("name").getStringOrDefault(),
+                    "ft" to props.get("formatedText").getStringOrDefault(),
+                    "ts" to props.get("textSize").getFloatOrDefault(),
+                    "tc" to props.get("textColor").getRgbaOrDefault(),
+                    "thw" to props.get("textHaloWidth").getFloatOrDefault(),
+                    "thc" to props.get("textHaloColor").getRgbaOrDefault(),
+                    "iid" to props.get("iconId").getStringOrDefault(),
+                    "is" to props.get("iconSize").getFloatOrDefault(),
+                    "ic" to props.get("iconColor").getRgbaOrDefault(),
+                    "ihw" to props.get("iconHaloWidth").getFloatOrDefault(),
+                    "ihc" to props.get("iconHaloColor").getRgbaOrDefault(),
+                    )
             }
+
+            val mapper = jacksonObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            val labelsJson = mapper.writeValueAsString(labels)
+            lastRequestedLabels = labelsJson
+
+            updateOutput()
         }
     }
 
@@ -216,7 +229,7 @@ class MainActivity : ComponentActivity() {
 
     private fun loadStyle(darkMode: Boolean): String =
         try {
-            val styleId = if (darkMode) R.raw.bing_maps_v9_china_dark_1 else R.raw.bing_maps_v9_china_1
+            val styleId = if (darkMode) R.raw.bing_maps_v9_china_dark else R.raw.bing_maps_v9_china
             ResourceUtils.readRawResource(this, styleId)
         } catch (exception: Exception) {
             Timber.e(exception, "Can't load local file style")
@@ -236,10 +249,12 @@ class MainActivity : ComponentActivity() {
                     mapView.height.toFloat()
                 )
             )
+
             val outputStr = "{" +
                     "\"status\":\"$status\"," +
                     "\"bounds\":[${northWest.latitude},${northWest.longitude},${southEast.latitude},${southEast.longitude}]," +
                     "\"center\":[${loc?.latitude},${loc?.longitude}]," +
+                    "\"labels\":$lastRequestedLabels," +
                     "\"zoom\":${zoom}" +
                     "}"
             outputText.text = outputStr
@@ -248,6 +263,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private val commands = CommandEvaluator(object : CommandExecutor {
+        override fun beginCommands() {
+            super.beginCommands()
+            lastRequestedLabels = "[]"
+        }
         override fun setAutomationMode(enable: Boolean) {
             Timber.tag(TAG).i("setAutomationMode(enable: ${enable})")
             // nothing to do.

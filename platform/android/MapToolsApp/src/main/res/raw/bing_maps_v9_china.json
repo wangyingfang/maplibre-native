@@ -17167,6 +17167,28 @@
                         "name"
                     ]
                 ],
+                "text-variable-anchor-offset": [
+                    "left",
+                    [
+                        0.9,
+                        -1.1
+                    ],
+                    "top",
+                    [
+                        0,
+                        0.1
+                    ],
+                    "right",
+                    [
+                        -0.9,
+                        -1.1
+                    ],
+                    "bottom",
+                    [
+                        0,
+                        -2.4
+                    ]
+                ],
                 "text-justify": "auto",
                 "text-letter-spacing": 0.04,
                 "text-padding": 0,
@@ -17423,6 +17445,28 @@
                         "name"
                     ]
                 ],
+                "text-variable-anchor-offset": [
+                    "left",
+                    [
+                        0.9,
+                        -1.1
+                    ],
+                    "top",
+                    [
+                        0,
+                        0.1
+                    ],
+                    "right",
+                    [
+                        -0.9,
+                        -1.1
+                    ],
+                    "bottom",
+                    [
+                        0,
+                        -2.4
+                    ]
+                ],
                 "text-justify": "auto",
                 "text-letter-spacing": 0.04,
                 "text-padding": 0,
@@ -17596,7 +17640,6 @@
             "source": "bing-mvt",
             "source-layer": "populated_place",
             "minzoom": 8,
-            "maxzoom": 12,
             "type": "symbol",
             "filter": [
                 "!",
@@ -17671,6 +17714,53 @@
                     ],
                     255
                 ],
+                "text-variable-anchor-offset": [
+                    "center",
+                    [
+                        0,
+                        0
+                    ],
+                    "top",
+                    [
+                        0,
+                        0.28
+                    ],
+                    "bottom",
+                    [
+                        0,
+                        -0.28
+                    ],
+                    "left",
+                    [
+                        -0.4,
+                        0
+                    ],
+                    "right",
+                    [
+                        0.4,
+                        0
+                    ],
+                    "bottom-right",
+                    [
+                        0.4,
+                        -0.28
+                    ],
+                    "top-right",
+                    [
+                        0.4,
+                        0.28
+                    ],
+                    "bottom-left",
+                    [
+                        -0.4,
+                        -0.28
+                    ],
+                    "top-left",
+                    [
+                        -0.4,
+                        0.28
+                    ]
+                ],
                 "text-max-width": [
                     "+",
                     [
@@ -17695,7 +17785,7 @@
             "source": "bing-mvt",
             "source-layer": "populated_place",
             "minzoom": 4,
-            "maxzoom": 8,
+            "maxzoom": 12,
             "type": "symbol",
             "filter": [
                 "has",

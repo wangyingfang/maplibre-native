@@ -35,7 +35,7 @@ val presetFilters = listOf(
     PresetFilter("12.未包含地势的底图，村级注释和点状符号", "!default,base,villageName,"),
     PresetFilter("13.未包含地势的底图，区县注释和点状符号", "!default,base,minorCityName,"),
     PresetFilter("14.未包含地势的底图，地级市注释和点状符号", "!default,base,admin2CityName,majorCityName,"),
-    PresetFilter("15.未包含地势的底图，地级市,县区注释和点状符号", "!default,base,admin2CityName,majorCityName,minorCityName,countyName,"),
+    PresetFilter("15.未包含地势的底图，地级市,县区注释和点状符号", "!default,base,admin2CityName,majorCityName,minorCityName,"),
     PresetFilter("16.未包含地势的底图，界线，地级市注释和点状符号", "!default,base,countryRegion,admin2CityName,majorCityName,"),
     PresetFilter("17.隐藏地势", ""), // NOTE There is no hill shading layer(s) in current map styles.
     PresetFilter("18.隐藏地势，道路编号，路名", "!roadName,!roadShield,"),

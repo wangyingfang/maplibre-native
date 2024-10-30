@@ -11,6 +11,9 @@ data class Style(var title: String, var value: String)
  *
  */
 interface CommandExecutor {
+    fun beginCommands() {}
+    fun endCommands() {}
+
     /**
      * Enable / disable automation mode.
      * @param enable True disable all user interactions; otherwise false.
@@ -56,7 +59,9 @@ class CommandEvaluator(private val executor: CommandExecutor) {
 
     fun evaluate(commandString: String) {
         val items: List<Item> = _mapper.readValue(commandString)
+        executor.beginCommands()
         items.forEach { evaluateItem(it) }
+        executor.endCommands()
     }
 
     private fun evaluateItem(item: Item) {

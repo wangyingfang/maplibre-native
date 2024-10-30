@@ -98,9 +98,10 @@ public:
     virtual ~RenderLayer() = default;
 
     // NOTE This method extracts extra properties from the feature.
-    virtual void evaluateLayoutExtras(const RefIndexedSubfeature& /*indexedFeature*/,
-                                                             mapbox::feature::property_map& /*properties*/,
-                                                             float /*zoom*/) const {}
+    virtual void evaluateLayoutExtras(const RefIndexedSubfeature& indexedFeature,
+                                      const GeometryTileFeature& geometryTileFeature,
+                                      mapbox::feature::property_map& properties,
+                                      float zoom) const;
 
     // Begin transitions for any properties that have changed since the last frame.
     virtual void transition(const TransitionParameters&) = 0;

@@ -86,6 +86,7 @@ public:
     ~RenderSymbolLayer() override;
 
     void evaluateLayoutExtras(const RefIndexedSubfeature& indexedFeature,
+                              const GeometryTileFeature& geometryTileFeature,
                               mapbox::feature::property_map& properties,
                               float zoom) const override;
 

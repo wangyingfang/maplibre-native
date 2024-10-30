@@ -257,4 +257,14 @@ bool RenderLayer::applyColorRamp(const style::ColorRampPropertyValue& colorValue
     return true;
 }
 
+void RenderLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexedFeature,
+                                const GeometryTileFeature& /*geometryTileFeature*/,
+                                mapbox::feature::property_map& properties,
+                                float /*zoom*/) const {
+    auto layerId = indexedFeature.getBucketLeaderID();
+    auto sourceLayer = indexedFeature.getSourceLayerName();
+    properties.insert(std::make_pair("layerId", mapbox::feature::value(layerId)));
+    properties.insert(std::make_pair("sourceLayer", mapbox::feature::value(sourceLayer)));
+}
+
 } // namespace mbgl

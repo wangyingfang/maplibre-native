@@ -1326,40 +1326,60 @@ void RenderSymbolLayer::update(gfx::ShaderRegistry& shaders,
 
 #endif // MLN_DRAWABLE_RENDERER
 
-// NOTE Defined in 'mbgl/layout/symbol_projection.cpp'
-float evaluateSizeForFeature(const ZoomEvaluatedSize& zoomEvaluatedSize, const PlacedSymbol& placedSymbol);
-
-template<typename T>
-struct PropertyValueVisitor
-{
+template <typename T>
+struct PaintPropertyVisitor {
+    const GeometryTileFeature& geometryTileFeature;
     float zoom;
-    PropertyValueVisitor(float zoom_)
-        : zoom(zoom_) {}
-    std::optional<T> operator()(const T& constant_) {
-        return constant_;
-    }
-    std::optional<T> operator ()(const PropertyExpression<T>& expression) {
-        return !expression.isZoomConstant() ? expression.evaluate(zoom) : std::optional<T>();
+    T defaultValue;
+    PaintPropertyVisitor(const GeometryTileFeature& geometryTileFeature_, float zoom_, T defaultValue_ = T())
+        : geometryTileFeature(geometryTileFeature_),
+          zoom(zoom_),
+          defaultValue(defaultValue_) {}
+    std::optional<T> operator()(const T& constant) { return constant; }
+    std::optional<T> operator()(const PropertyExpression<T>& expression) {
+        return expression.evaluate(zoom, geometryTileFeature, defaultValue);
     }
 };
 
+template <typename T>
+struct LayoutPropertyVisitor {
+    const GeometryTileFeature& geometryTileFeature;
+    float zoom;
+    T defaultValue;
+    LayoutPropertyVisitor(const GeometryTileFeature& geometryTileFeature_, float zoom_, T defaultValue_ = T())
+        : geometryTileFeature(geometryTileFeature_),
+          zoom(zoom_),
+          defaultValue(defaultValue_) {}
+    std::optional<T> operator()(const Undefined&) { return std::nullopt; }
+    std::optional<T> operator()(const T& constant) { return constant; }
+    std::optional<T> operator()(const PropertyExpression<T>& expression) {
+        return expression.evaluate(zoom, geometryTileFeature, defaultValue);
+    }
+};
+
+#include <mbgl/style/conversion.hpp>
+#include <mbgl/style/expression/image.hpp>
+#include <mbgl/layout/symbol_projection.hpp>
+
 void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexedFeature,
-                                                                    mapbox::feature::property_map& properties,
-                                                                    float zoom) const {
+                                             const GeometryTileFeature& geometryTileFeature,
+                                             mapbox::feature::property_map& properties,
+                                             float zoom) const {
+    RenderLayer::evaluateLayoutExtras(indexedFeature, geometryTileFeature, properties, zoom);
+
     for (const RenderTile& tile : *renderTiles) {
         auto bucket = (SymbolBucket*)tile.getBucket(*baseImpl);
         auto renderData = tile.getLayerRenderData(*baseImpl);
         if (!bucket || !renderData) {
             continue;
         }
-        // TODO The icon image name???
         const auto& evaluated = getEvaluated<SymbolLayerProperties>(renderData->layerProperties);
-        auto textColor = evaluated.get<TextColor>().match(PropertyValueVisitor<Color>(zoom));
-        auto textHaloColor = evaluated.get<TextHaloColor>().match(PropertyValueVisitor<Color>(zoom));
-        auto textHaloWidth = evaluated.get<TextHaloWidth>().match(PropertyValueVisitor<float>(zoom));
-        auto iconColor = evaluated.get<IconColor>().match(PropertyValueVisitor<Color>(zoom));
-        auto iconHaloColor = evaluated.get<IconHaloColor>().match(PropertyValueVisitor<Color>(zoom));
-        auto iconHaloWidth = evaluated.get<IconHaloWidth>().match(PropertyValueVisitor<float>(zoom));
+        auto textColor = evaluated.get<TextColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
+        auto textHaloColor = evaluated.get<TextHaloColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
+        auto textHaloWidth = evaluated.get<TextHaloWidth>().match(PaintPropertyVisitor<float>(geometryTileFeature, zoom));
+        auto iconColor = evaluated.get<IconColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
+        auto iconHaloColor = evaluated.get<IconHaloColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
+        auto iconHaloWidth = evaluated.get<IconHaloWidth>().match(PaintPropertyVisitor<float>(geometryTileFeature, zoom));
 
         auto partiallyEvaluatedTextSize = bucket->textSizeBinder->evaluateForZoom(zoom);
         auto partiallyEvaluatedIconSize = bucket->iconSizeBinder->evaluateForZoom(zoom);
@@ -1370,6 +1390,22 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
                 auto placedTextIndex = symbolInstance.getDefaultHorizontalPlacedTextIndex();
                 auto placedIconIndex = symbolInstance.getPlacedIconIndex();
                 if (placedTextIndex) {
+                    auto textField = impl_cast(baseImpl).layout.get<TextField>().match(
+                        LayoutPropertyVisitor<style::expression::Formatted>(geometryTileFeature, zoom));
+                    if (textField) {
+                        std::ostringstream formatedText;
+                        for (const auto& section : textField->sections) {
+                            if (formatedText.tellp() > 0) {
+                                formatedText << "\n";
+                            }
+                            formatedText << section.text;
+                        }
+                        if (formatedText.tellp() > 0) {
+                            properties.insert(
+                                std::make_pair("formatedText", mapbox::feature::value(formatedText.str())));
+                        }
+                    }
+
                     const PlacedSymbol& placedSymbol = bucket->text.placedSymbols.at(*placedTextIndex);
                     const float textSize_ = evaluateSizeForFeature(partiallyEvaluatedTextSize, placedSymbol);
                     properties.insert(std::make_pair("textSize", mapbox::feature::value(textSize_)));
@@ -1389,6 +1425,11 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
                                                                      mapbox::feature::value(textHaloColor->a)}));
                 }
                 if (placedIconIndex) {
+                    auto imageIcon = impl_cast(baseImpl).layout.get<IconImage>().match(
+                        LayoutPropertyVisitor<style::expression::Image>(geometryTileFeature, zoom));
+                    if (imageIcon)
+                        properties.insert(std::make_pair("iconId", mapbox::feature::value(imageIcon->id())));
+
                     const auto& iconBuffer = symbolInstance.hasSdfIcon() ? bucket->sdfIcon : bucket->icon;
                     const PlacedSymbol& placedSymbol = iconBuffer.placedSymbols.at(*placedIconIndex);
                     const float iconSize_ = evaluateSizeForFeature(partiallyEvaluatedIconSize, placedSymbol);
