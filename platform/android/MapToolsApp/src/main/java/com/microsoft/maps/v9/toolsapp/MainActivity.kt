@@ -264,7 +264,7 @@ class MainActivity : ComponentActivity() {
                     "\"bounds\":[${northWest.latitude},${northWest.longitude},${southEast.latitude},${southEast.longitude}]," +
                     "\"center\":[${loc?.latitude},${loc?.longitude}]," +
                     "\"labels\":$lastRequestedLabels," +
-                    "\"zoom\":${zoom}" +
+                    "\"zoom\":${zoom + 1}" +
                     "}"
             outputText.text = outputStr
             Timber.tag(TAG).i("outputStr=$outputStr")
@@ -286,7 +286,7 @@ class MainActivity : ComponentActivity() {
             Timber.tag(TAG).i("setScene(scene: ${scene})")
             mapView.getMapAsync {
                 it.cameraPosition =
-                    CameraPosition.Builder().target(LatLng(scene.lat, scene.lon)).zoom(scene.zoom)
+                    CameraPosition.Builder().target(LatLng(scene.lat, scene.lon)).zoom(scene.zoom - 1)
                         .build()
             }
         }
