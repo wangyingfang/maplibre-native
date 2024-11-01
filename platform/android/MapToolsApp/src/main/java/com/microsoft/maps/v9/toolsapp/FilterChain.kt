@@ -2,6 +2,7 @@ package com.microsoft.maps.v9.toolsapp
 
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.BackgroundLayer
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillExtrusionLayer
 import org.maplibre.android.style.layers.FillLayer
@@ -16,7 +17,7 @@ import org.maplibre.android.style.layers.SymbolLayer
 class FilterCondition(val pattern: String, val expression: String? = null) {}
 data class FilterExpression(val expression: String, val negative: Boolean)
 data class FilterLayer(val id: String, val type: String, val sourceLayer: String)
-data class DefaultLayerFilter(val id: String, val visible: Boolean, val expression: String?)
+data class LayerFilterState(val id: String, val visible: Boolean, val expression: String?)
 
 class Filter(val chain: FilterChain, condition: FilterCondition, val negative: Boolean?) {
 
@@ -66,7 +67,7 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
             val visible = layer.visibility.getValue() != "none"
             val expression = getFilterExpression(layer)
             val exp = expression?.toString() ?: ""
-            dlf = DefaultLayerFilter(fl.id, visible, exp)
+            dlf = LayerFilterState(fl.id, visible, exp)
             dlfs[layer.id] = dlf
         }
         try {
@@ -112,7 +113,7 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
 
 class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null) {
     companion object {
-        val defaultLayerFilters = mutableMapOf<String, DefaultLayerFilter>()
+        val defaultLayerFilters = mutableMapOf<String, LayerFilterState>()
         var defaultVisibleLayers = listOf<FilterLayer>()
 
         fun resetAfterStyleChanged() {
@@ -143,6 +144,7 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
         return this
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun getDefaultVisibleLayers(): List<FilterLayer> {
         val map = this.map ?: throw RuntimeException("map instance not been set")
 
@@ -161,15 +163,29 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
         }
 
         if (defaultVisibleLayers.isEmpty()) {
+            // The testers wants to display a pure white/black background in some cases.
+            // The code below sets the top-level background color to #FFFFFF (light style) or #000000 (dark style).
+            // NOTE: The vector background layer will not be affected.
+            val backgroundLayerId = "microsoft.bing.maps.base.land"
+            val backgroundLayer = (map.style?.layers?.find { it.id == backgroundLayerId }) as? BackgroundLayer
+            val backgroundColor = backgroundLayer?.backgroundColor
+            if (backgroundLayer?.backgroundColor?.isValue == true) {
+                val color = backgroundLayer.backgroundColorAsInt.toUInt()
+                val rgba = Rgba.fromUInt(color)
+                if (rgba.r > 215 && rgba.g > 215 && rgba.b > 215) {
+                    // on light style
+                    backgroundLayer.setProperties(PropertyValue("background-color", "#ffffff"))
+                } else if (rgba.r < 40 && rgba.g < 40 && rgba.b < 40) {
+                    backgroundLayer.setProperties(PropertyValue("background-color", "#000000"))
+                }
+            }
+
+            // Saves the IDs of layers that are displayed by default, which is used to restore the default state of
+            // layers that should not be affected when switching filters.
             defaultVisibleLayers = map.style?.layers
-                ?.filter { it.javaClass.simpleName != "BackgroundLayer" && it.visibility.getValue() != "none" /* NOTE bing maps custom metadata 'delayLoad' */ }
-                ?.map {
-                    FilterLayer(
-                        it.id,
-                        it.javaClass.simpleName,
-                        getSourceLayer(it)
-                    )
-                } ?: listOf()
+                ?.filter { it.id != backgroundLayerId && it.visibility.getValue() != "none" }
+                ?.map { FilterLayer(it.id, it.javaClass.simpleName, getSourceLayer(it)) }
+                ?: listOf()
         }
         return defaultVisibleLayers
     }
@@ -207,8 +223,9 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
 
 val filterConditions = mapOf(
     "default" to listOf(FilterCondition("microsoft\\.bing.maps\\..*")),
-    "base" to listOf(FilterCondition("microsoft\\.bing.maps\\.baseFeature\\.[\\w\\d\\-_]+_fill;")),
-    "raster" to listOf(FilterCondition("<type:raster>")),
+    "land" to listOf(FilterCondition("microsoft.bing.maps.baseFeature.vector_land")),
+    "base" to listOf(FilterCondition("microsoft\\.bing.maps\\.baseFeature\\.([\\w\\d\\-_]+_fill|vector_land);")),
+    "reserve" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.(baseFeature|labels)\\.[\\w\\d\\-_]+;reserve|golf_course")),
     "hillShading" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.hillShading\\.hillShading;")),
 
     "water" to listOf(FilterCondition("microsoft.bing.maps.baseFeature.generic_water_feature_fill")),
@@ -303,13 +320,19 @@ val filterConditions = mapOf(
     "road" to listOf(
         FilterCondition("microsoft\\.bing\\.maps\\.roads\\.[\\w\\d\\-_]+;road[\\w\\d\\-_]*|railway[\\w\\d\\-_]*|tramway"),
     ),
+    "railway" to listOf(
+        FilterCondition("microsoft\\.bing\\.maps\\.roads\\.[\\w\\d\\-_]+;railway[\\w\\d\\-_]*"),
+    ),
     "roadName" to listOf(
-        FilterCondition("microsoft\\.bing\\.maps\\.labels\\..+_line_.+;road[\\w\\d\\-_]*|railway[\\w\\d\\-_]*|tramway"),
+        FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;road[\\w\\d\\-_]*|railway[\\w\\d\\-_]*|tramway"),
+    ),
+    "railwayName" to listOf(
+        FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;railway[\\w\\d\\-_]*"),
     ),
     "roadShield" to listOf(
         FilterCondition("microsoft\\.bing\\.maps\\.labels\\..+_road_shield.*;road"),
     ),
-    "landmark" to  listOf(
+    "landmark" to listOf(
         FilterCondition("microsoft\\.bing\\.maps\\.labels\\..+_landmark(_\\w+)?"),
     ),
 )

@@ -26,7 +26,7 @@ class MapToolsApplication : MultiDexApplication() {
     private fun initializeStrictMode() {
         StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
-                .detectDiskReads()
+                //.detectDiskReads()
                 .detectDiskWrites()
                 .detectNetwork()
                 .penaltyLog()
