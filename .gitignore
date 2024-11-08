@@ -68,3 +68,4 @@ out.png
 /platform/android/MapLibreAndroid/src/vulkanDebug
 /test/android/local.properties
 /render-test/android/local.properties
+/platform/android/MapToolsApp/drawable

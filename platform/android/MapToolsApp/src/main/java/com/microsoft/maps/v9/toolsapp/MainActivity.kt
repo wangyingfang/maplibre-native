@@ -305,7 +305,7 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun setStyle(index: Int) {
-            val i = max(0, index - 1)
+            val i = max(0, index)
             selectFilter(i)
         }
 

@@ -169,7 +169,7 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
             val backgroundLayerId = "microsoft.bing.maps.base.land"
             val backgroundLayer = (map.style?.layers?.find { it.id == backgroundLayerId }) as? BackgroundLayer
             val backgroundColor = backgroundLayer?.backgroundColor
-            if (backgroundLayer?.backgroundColor?.isValue == true) {
+            if (backgroundColor?.isValue == true) {
                 val color = backgroundLayer.backgroundColorAsInt.toUInt()
                 val rgba = Rgba.fromUInt(color)
                 if (rgba.r > 215 && rgba.g > 215 && rgba.b > 215) {
@@ -224,8 +224,10 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
 val filterConditions = mapOf(
     "default" to listOf(FilterCondition("microsoft\\.bing.maps\\..*")),
     "land" to listOf(FilterCondition("microsoft.bing.maps.baseFeature.vector_land")),
-    "base" to listOf(FilterCondition("microsoft\\.bing.maps\\.baseFeature\\.([\\w\\d\\-_]+_fill|vector_land);")),
-    "reserve" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.(baseFeature|labels)\\.[\\w\\d\\-_]+;reserve|golf_course")),
+    "base" to listOf(FilterCondition("microsoft\\.bing.maps\\.baseFeature\\.[\\w\\d\\-_]+;")),
+    // "reserve" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.(baseFeature|labels)\\.[\\w\\d\\-_]+;reserve|golf_course")),
+    "reserve" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.baseFeature\\.[\\w\\d\\-_]+;reserve|golf_course")),
+    "buildings" to listOf(FilterCondition("microsoft.bing.maps.buildings.buildings")),
     "hillShading" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.hillShading\\.hillShading;")),
 
     "water" to listOf(FilterCondition("microsoft.bing.maps.baseFeature.generic_water_feature_fill")),
@@ -242,6 +244,7 @@ val filterConditions = mapOf(
     "countryRegion" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.roads\\.[\\w\\d\\-_]+;country_region")),
     "countryRegionName" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;country_region")),
 
+    "island" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.baseFeature\\.[\\w\\d\\-_]+;island")),
     "islandName" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;island")),
 
     "cityName" to listOf(
@@ -260,7 +263,14 @@ val filterConditions = mapOf(
         // 其它增补城市（已确定：丹东、东港市、二连浩特）
         FilterCondition("microsoft\\.bing\\.maps\\.labels\\.generic_label_orientation_[\\w\\d\\-_]+_(labelonly|iconlabel)"),
     ),
-    "capitalCityName" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.labels\\.generic_(sov_capital|beijing)_(labelonly|iconlabel);")),
+    "capitalCityName" to listOf(
+        FilterCondition("microsoft\\.bing\\.maps\\.labels\\.generic_(sov_capital|beijing)_(labelonly|iconlabel);"),
+        // 其它增补城市（已确定：加德满都、伊斯兰堡）
+        FilterCondition(
+            "microsoft\\.bing\\.maps\\.labels\\.generic_label_orientation_[\\w\\d\\-_]+_(labelonly|iconlabel)",
+            "[\"==\",[\"get\",\"cn-ppl\"],\"sovcap\"]"
+        ),
+    ),
     "admin1CityName" to listOf(
         FilterCondition(
             "microsoft\\.bing\\.maps\\.labels\\.generic_populated_place_(labelonly|iconlabel)",
