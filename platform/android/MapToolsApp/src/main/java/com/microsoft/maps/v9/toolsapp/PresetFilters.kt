@@ -41,7 +41,7 @@ val presetFilters = listOf(
     PresetFilter("17.空白底图且显示国家名,国外城市名及其点状符号", "!default,countryRegionName,cityName,"),
     PresetFilter("18.陆地空白色且显示水域形状,水域名,界线", "!default,water,island,waterName,countryRegion,"),
     PresetFilter("19.陆地空白色且显示水域形状,界线,道路,隐藏铁路", "!default,water,island,countryRegion,road,!railway,"),
-    PresetFilter("20.陆地空白色且隐藏地势,道路编号,路名,道路,绿地", "!land,!base,water,island,!road,!roadName,!roadShield,"),
+    PresetFilter("20.陆地空白色且隐藏地势,道路编号,路名,道路", "!land,!base,water,island,!road,!roadName,!roadShield,"),
     PresetFilter("21.显示未包含地势和绿地的底图,岛屿名", "!default,land,base,!reserve,islandName,"),
     PresetFilter("22.显示未包含地势的底图,城市名,水域名,岛屿名", "!hillShading,"),
 )
