@@ -53,6 +53,10 @@ MLN_EXPORT
  */
 @property (nonatomic, nullable) NSPredicate *predicate;
 
+// NOTE ++++++++ Hongbo Yu
+@property (nonatomic, nullable) id filterExpression;
+
+
 @end
 
 NS_ASSUME_NONNULL_END
