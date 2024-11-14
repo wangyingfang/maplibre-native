@@ -25,6 +25,7 @@ class StatusChangedWatcher(private val callback: (String) -> Unit, private val d
         mapView?.removeOnWillStartRenderingMapListener(this)
         mapView?.removeOnWillStartLoadingMapListener(this)
         mapView?.removeOnDidBecomeIdleListener(this)
+        mapView = null
     }
 
     override fun onCameraWillChange(animated: Boolean) {
