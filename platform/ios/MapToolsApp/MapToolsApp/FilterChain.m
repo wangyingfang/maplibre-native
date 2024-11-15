@@ -166,9 +166,9 @@
         for (FilterExpression* condition in _conditions) {
             id exp = [condition.expression length] ? [NSJSONSerialization JSONObjectWithData:[condition.expression dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil] : nil;
             if (condition.negative) {
-                [negativeList addObject:exp ? @[@"!", exp] : [NSNumber numberWithBool:NO]];
+                [negativeList addObject:exp ? @[@"!", exp] : @NO];
             } else {
-                [positiveList addObject:(exp ? exp : [NSNumber numberWithBool:YES])];
+                [positiveList addObject:(exp ? exp : @YES)];
             }
         }
         id expression = nil;
@@ -185,10 +185,10 @@
         if (defaultExpression != nil) {
             expression = expression ? @[@"all", defaultExpression, expression] : defaultExpression;
         }
-        NSLog(@"layerId=%@", layerId);
-        if ([expression isKindOfClass:NSNumber.class]) {
-            expression = @[@"all", expression];
+        if (expression == nil || [expression isKindOfClass:NSNumber.class]) {
+            expression = @[@"literal", expression ?: @YES];
         }
+        NSLog(@"layerId=%@", layerId);
         NSLog(@"expression=%@", [expression toJsonStringPrettyPrinted:YES]);
 
         [((MLNVectorStyleLayer*)layer) setFilterExpression:expression];

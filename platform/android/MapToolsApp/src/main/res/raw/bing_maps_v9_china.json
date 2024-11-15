@@ -71,7 +71,7 @@
             "id": "microsoft.bing.maps.base.land",
             "type": "background",
             "paint": {
-                "background-color": "#F9FAF7"
+                "background-color": "#FFFFFF"
             }
         },
         {

@@ -2,7 +2,6 @@ package com.microsoft.maps.v9.toolsapp
 
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.style.expressions.Expression
-import org.maplibre.android.style.layers.BackgroundLayer
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillExtrusionLayer
 import org.maplibre.android.style.layers.FillLayer
@@ -43,18 +42,6 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
     }
 
     fun doFilter(fl: FilterLayer): Boolean {
-        val getFilterExpression: (Layer) -> Expression? = {
-            when (it) {
-                is CircleLayer -> it.filter
-                is FillExtrusionLayer -> it.filter
-                is FillLayer -> it.filter
-                is HeatmapLayer -> it.filter
-                is LineLayer -> it.filter
-                is SymbolLayer -> it.filter
-                else -> null
-            }
-        }
-
         val map = chain.map ?: throw RuntimeException("map instance not been set")
         if (!isLayerMatched(fl)) {
             return false
@@ -65,14 +52,13 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
         var dlf = dlfs[fl.id]
         if (dlf == null) {
             val visible = layer.visibility.getValue() != "none"
-            val expression = getFilterExpression(layer)
+            val expression = layer.getFilterExpression()
             val exp = expression?.toString() ?: ""
             dlf = LayerFilterState(fl.id, visible, exp)
             dlfs[layer.id] = dlf
         }
-        try {
+        if (layer.isVectorLayer()) {
             // Some layers supports filter, so all conditions need to be applied.
-            val setFilterMethod = layer.javaClass.getMethod("setFilter", Expression::class.java)
             val positives = mutableListOf<Expression>()
             val negatives = mutableListOf<Expression>()
             for (condition in conditions) {
@@ -84,27 +70,26 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
                     positives.add(exp ?: Expression.literal(true))
                 }
             }
-            var combinedExpression =
-                if (positives.isEmpty()) Expression.literal(true) else Expression.any(*positives.toTypedArray())
+            var expression: Expression? = null
+            if (positives.isNotEmpty()) {
+                expression = if (positives.size == 1) positives[0] else Expression.any(*positives.toTypedArray())
+            }
             if (negatives.isNotEmpty()) {
-                combinedExpression =
-                    Expression.all(*positives.toTypedArray(), *negatives.toTypedArray())
+                if (expression != null) {
+                    negatives.add(expression)
+                }
+                expression = if (negatives.size == 1) negatives[0] else Expression.all(*negatives.toTypedArray())
             }
             if (!dlf.expression.isNullOrEmpty()) {
-                combinedExpression = Expression.all(
-                    Expression.Converter.convert(dlf.expression!!),
-                    combinedExpression
-                )
+                val defaultExpression = Expression.Converter.convert(dlf.expression!!)
+                expression = if (expression != null) Expression.all(defaultExpression, expression) else defaultExpression
             }
-            setFilterMethod.invoke(layer, combinedExpression)
-        } catch (ex: NoSuchMethodException) {
+            layer.setFilterExpression(expression ?: Expression.literal(true))
+        } else {
             // Some layers don't support filter and can only be set to visible or hidden, so only the last condition needs to be applied.
             val lastCondition = conditions.last()
             layer.setProperties(
-                PropertyValue(
-                    "visibility",
-                    if (lastCondition.negative) "none" else "visible"
-                )
+                PropertyValue("visibility", if (lastCondition.negative) "none" else "visible")
             )
         }
         return true
@@ -148,43 +133,14 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
     private fun getDefaultVisibleLayers(): List<FilterLayer> {
         val map = this.map ?: throw RuntimeException("map instance not been set")
 
-        val getSourceLayer: (Layer) -> String = {
-            when (it) {
-                is CircleLayer -> it.sourceLayer
-                is FillExtrusionLayer -> it.sourceLayer
-                is FillLayer -> it.sourceLayer
-                is HeatmapLayer -> it.sourceLayer
-                is HillshadeLayer -> it.sourceLayer
-                is LineLayer -> it.sourceLayer
-                is RasterLayer -> it.sourceLayer
-                is SymbolLayer -> it.sourceLayer
-                else -> ""
-            }
-        }
-
         if (defaultVisibleLayers.isEmpty()) {
-            // The testers wants to display a pure white/black background in some cases.
-            // The code below sets the top-level background color to #FFFFFF (light style) or #000000 (dark style).
-            // NOTE: The vector background layer will not be affected.
             val backgroundLayerId = "microsoft.bing.maps.base.land"
-            val backgroundLayer = (map.style?.layers?.find { it.id == backgroundLayerId }) as? BackgroundLayer
-            val backgroundColor = backgroundLayer?.backgroundColor
-            if (backgroundColor?.isValue == true) {
-                val color = backgroundLayer.backgroundColorAsInt.toUInt()
-                val rgba = Rgba.fromUInt(color)
-                if (rgba.r > 215 && rgba.g > 215 && rgba.b > 215) {
-                    // on light style
-                    backgroundLayer.setProperties(PropertyValue("background-color", "#ffffff"))
-                } else if (rgba.r < 40 && rgba.g < 40 && rgba.b < 40) {
-                    backgroundLayer.setProperties(PropertyValue("background-color", "#000000"))
-                }
-            }
 
             // Saves the IDs of layers that are displayed by default, which is used to restore the default state of
             // layers that should not be affected when switching filters.
             defaultVisibleLayers = map.style?.layers
                 ?.filter { it.id != backgroundLayerId && it.visibility.getValue() != "none" }
-                ?.map { FilterLayer(it.id, it.javaClass.simpleName, getSourceLayer(it)) }
+                ?.map { FilterLayer(it.id, it.javaClass.simpleName, it.getSourceLayer()) }
                 ?: listOf()
         }
         return defaultVisibleLayers
@@ -204,17 +160,13 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
         for (fl in layers.filter { !layerIdsUpdated.contains(it.id) }) {
             val dlf = dlfs[fl.id] ?: continue
             val layer = map.style?.layers?.find { it.id == fl.id } ?: throw RuntimeException("The specified layer#${fl.id} could not found.")
-            try {
-                val setFilterMethod = layer.javaClass.getMethod("setFilter", Expression::class.java)
+            if (layer.isVectorLayer()) {
                 val exp = if (dlf.expression.isNullOrEmpty()) Expression.literal(true)
                 else Expression.Converter.convert(dlf.expression)
-                setFilterMethod.invoke(layer, exp)
-            } catch (ex: NoSuchMethodException) {
+                layer.setFilterExpression(exp)
+            } else {
                 layer.setProperties(
-                    PropertyValue(
-                        "visibility",
-                        if (!dlf.visible) "none" else "visible"
-                    )
+                    PropertyValue("visibility", if (!dlf.visible) "none" else "visible")
                 )
             }
         }

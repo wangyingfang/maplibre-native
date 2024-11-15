@@ -70,11 +70,11 @@ NSArray<PresetFilter*>* _allFilters = nil;
             [PresetFilter filterWithTitle:@"15.空白底图且显示地级市名,县区名及其点状符号" query:@"!default,admin2CityName,majorCityName,minorCityName,"],
             [PresetFilter filterWithTitle:@"16.空白底图且显示国外城市名及其点状符号" query:@"!default,cityName,"],
             [PresetFilter filterWithTitle:@"17.空白底图且显示国家名,国外城市名及其点状符号" query:@"!default,countryRegionName,cityName,"],
-            [PresetFilter filterWithTitle:@"18.陆地空白色且显示水域形状,水域名,界线" query:@"!default,water,waterName,countryRegion,"],
-            [PresetFilter filterWithTitle:@"19.陆地空白色且显示水域形状,界线,道路,隐藏铁路" query:@"!default,water,countryRegion,road,!railway,"],
-            [PresetFilter filterWithTitle:@"20.陆地空白色且隐藏地势,道路编号,路名,道路,绿地" query:@"!land,!reserve,!hillShading,!roadName,!roadShield,"],
+            [PresetFilter filterWithTitle:@"18.陆地空白色且显示水域形状,水域名,界线" query:@"!default,water,island,waterName,countryRegion,"],
+            [PresetFilter filterWithTitle:@"19.陆地空白色且显示水域形状,界线,道路,隐藏铁路" query:@"!default,water,island,countryRegion,road,!railway,"],
+            [PresetFilter filterWithTitle:@"20.陆地空白色且隐藏地势,道路编号,路名,道路" query:@"!land,!base,water,island,!road,!roadName,!roadShield,"],
             [PresetFilter filterWithTitle:@"21.显示未包含地势和绿地的底图,岛屿名" query:@"!default,land,base,!reserve,islandName,"],
-            [PresetFilter filterWithTitle:@"22.显示未包含地势的底图,城市名,水域名,岛屿名" query:@"!default,land,base,!reserve,waterName,islandName,cityName,!townName,!villageName,"],
+            [PresetFilter filterWithTitle:@"22.显示未包含地势的底图,城市名,水域名,岛屿名" query:@"!buildings,!hillShading,!continentName,!countryRegion,!countryRegionName,!road,!roadName,!roadShield,!landmark,"],
         ];
     });
     return _allFilters;
