@@ -16,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.google.gson.JsonArray
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
@@ -202,12 +203,13 @@ class MainActivity : ComponentActivity() {
                 val props = it.properties()!!
                 val textHaloWidth = props.get("textHaloWidth").getFloatOrDefault(0f)!!
                 val iconHaloWidth = props.get("iconHaloWidth").getFloatOrDefault(0f)!!
+                val anchorTypes = (props.get("anchorTypes") as? JsonArray)?.map { type -> type.asString }
                 mapOf(
                     "l" to arrayOf(geoPoint.latitude(), geoPoint.longitude()),
                     "d" to distanceInPixels,
                     "lid" to props.get("layerId").getStringOrDefault(),
                     "sl" to props.get("sourceLayer").getStringOrDefault(),
-                    // "t" to props.get("name").getStringOrDefault(),
+                    "ats" to anchorTypes,
                     "ft" to props.get("formatedText").getStringOrDefault(),
                     "ts" to props.get("textSize").getFloatOrDefault(),
                     "tc" to props.get("textColor").getRgbaOrDefault()?.toIntArray(),
@@ -293,7 +295,7 @@ class MainActivity : ComponentActivity() {
 
         override fun setTheme(themeName: String) {
             Timber.tag(TAG).i("setTheme(themeName: ${themeName})")
-            val isDarkStyle = themeName == "roadDark"
+            val isDarkStyle = themeName.lowercase().indexOf("dark") > -1;
             mapView.getMapAsync {
                 setStyle(isDarkStyle)
             }
