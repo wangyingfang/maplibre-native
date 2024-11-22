@@ -1,3 +1,5 @@
+#include <ranges>
+
 #include <mbgl/renderer/layers/render_symbol_layer.hpp>
 
 #include <mbgl/gfx/cull_face_mode.hpp>
@@ -1391,11 +1393,10 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
         }
 
     };
-
     for (const RenderTile& tile : *renderTiles) {
         auto bucket = (SymbolBucket*)tile.getBucket(*baseImpl);
         auto renderData = tile.getLayerRenderData(*baseImpl);
-        if (!bucket || !renderData) {
+        if (!bucket || bucket->bucketInstanceId != indexedFeature.getBucketInstanceId() || !renderData) {
             continue;
         }
         const auto& evaluated = getEvaluated<SymbolLayerProperties>(renderData->layerProperties);
@@ -1426,8 +1427,8 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
                             formatedText << section.text;
                         }
                         if (formatedText.tellp() > 0) {
-                            properties.insert(
-                                std::make_pair("formatedText", mapbox::feature::value(formatedText.str())));
+                            auto text = formatedText.str();
+                            properties.insert(std::make_pair("formatedText", mapbox::feature::value(text)));
                         }
                     }
 
