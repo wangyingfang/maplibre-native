@@ -146,6 +146,14 @@ target_include_directories(
     ${PROJECT_SOURCE_DIR}/src
 )
 
+# this is needed because Android is not officially supported
+# https://discourse.cmake.org/t/error-when-crosscompiling-with-whole-archive-target-link/9394
+# https://cmake.org/cmake/help/latest/release/3.24.html#generator-expressions
+set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE 
+"-Wl,--whole-archive <LIBRARY> -Wl,--no-whole-archive"
+)
+set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE_SUPPORTED True)
+
 find_package(curl CONFIG)
 
 target_link_libraries(
@@ -154,9 +162,7 @@ target_link_libraries(
         Mapbox::Base::jni.hpp
         mbgl-compiler-options
         $<$<BOOL:${curl_FOUND}>:curl::curl_static>
-        -Wl,--whole-archive
-        mbgl-test
-        -Wl,--no-whole-archive
+        $<LINK_LIBRARY:WHOLE_ARCHIVE,mbgl-test>
 )
 
 
@@ -209,9 +215,7 @@ target_link_libraries(
     PRIVATE
         Mapbox::Base::jni.hpp
         mbgl-compiler-options
-        -Wl,--whole-archive
-        mbgl-benchmark
-        -Wl,--no-whole-archive
+        $<LINK_LIBRARY:WHOLE_ARCHIVE,mbgl-benchmark>
 )
 
 add_custom_command(

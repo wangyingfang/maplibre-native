@@ -16,7 +16,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://plugins.gradle.org/m2/")
     }
 }
 
@@ -24,9 +23,9 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-include(":MapLibreAndroid", ":MapLibreAndroidTestApp", ":MapLibreAndroidLint", ":MapToolsApp")
+include(":MapLibreAndroid", ":MapLibreAndroidTestApp", ":MapLibreAndroidLint")
 
-rootProject.name = "MapLibre Native for Android"
+rootProject.name = "MapLibreAndroid"
 
 val renderTestProjectDir = file("$rootDir/../../render-test/android")
 includeBuild(renderTestProjectDir) {
@@ -37,4 +36,5 @@ val cppTestProjectDir = file("$rootDir/../../test/android")
 includeBuild(cppTestProjectDir) {
     name = "cppUnitTestsApp"
 }
-include(":MapToolsApp")
+
+includeBuild("./MapLibrePlugin")
