@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Design - MapLibre Native Developer Documentation</title>
+        <title>Android - MapLibre Native Developer Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -220,25 +220,48 @@
 }
 
 </style>
-<div class="mdbook-alerts mdbook-alerts-note">
-<p class="mdbook-alerts-title">
-  <span class="mdbook-alerts-icon"></span>
-  note
+<h1 id="maplibre-android-developer-guide"><a class="header" href="#maplibre-android-developer-guide">MapLibre Android Developer Guide</a></h1>
+<p>These instructions are for developers interested in making code-level contributions to MapLibre Native for Android.</p>
+<h2 id="getting-the-source"><a class="header" href="#getting-the-source">Getting the source</a></h2>
+<p>Clone the git repository and pull in submodules:</p>
+<pre><code class="language-bash">git clone git@github.com:maplibre/maplibre-native.git
+cd maplibre-native
+git submodule update --init --recursive
+cd platform/android
+</code></pre>
+<h2 id="requirements"><a class="header" href="#requirements">Requirements</a></h2>
+<p><a href="https://developer.android.com/studio">Android Studio</a> needs to be installed.</p>
+<p>Open the <code>platform/android</code> directory to get started.</p>
+<h2 id="setting-an-api-key"><a class="header" href="#setting-an-api-key">Setting an API Key</a></h2>
+<p><em>The test application (used for development purposes) uses MapTiler vector tiles, which require a MapTiler account and API key.</em></p>
+<p>With the first Gradle invocation, Gradle will take the value of the <code>MLN_API_KEY</code> environment variable and save it to <code>MapLibreAndroidTestApp/src/main/res/values/developer-config.xml</code>. If the environment variable wasn't set, you can edit <code>developer-config.xml</code> manually and add your API key to the <code>api_key</code> resource.</p>
+<h2 id="running-the-testapp"><a class="header" href="#running-the-testapp">Running the TestApp</a></h2>
+<p>Run the configuration for the <code>MapLibreAndroidTestApp</code> module and select a device or emulator to deploy on.</p>
+<p align="left">
+  <img src="https://github.com/maplibre/maplibre-native/assets/649392/5494925e-8cbb-4d5d-8033-8a2f141ede3c" alt="Android TestApp menu" width="15%">   <img src="https://github.com/maplibre/maplibre-native/assets/649392/f169db51-615d-4fca-b297-ac6197bec674" alt="Android TestApp showing Demotiles" width="15%">
 </p>
-<p>These notes are partially outdated since the <a href="https://github.com/maplibre/maplibre-native/blob/main/design-proposals/2022-10-27-rendering-modularization.md">renderer modularization</a>.</p>
-</div>
-<h1 id="design"><a class="header" href="#design">Design</a></h1>
-<p>This section is dedicated to documenting current state of MapLibre Native as of end 2022. <a href="./archictural-problems-and-recommendations.html">Architectural Problems and Recommendations</a> section notes recommendations for future improvements from an architectural perspective.</p>
+<h2 id="kotlin"><a class="header" href="#kotlin">Kotlin</a></h2>
+<p>All new code should be written in <a href="https://kotlinlang.org/">Kotlin</a>.</p>
+<h2 id="style-checking"><a class="header" href="#style-checking">Style Checking</a></h2>
+<p>To check Kotlin style, we use <a href="https://pinterest.github.io/ktlint/">ktlint</a>. This linter is based on the <a href="https://kotlinlang.org/docs/coding-conventions.html">official Kotlin coding conventions</a>. We intergrate with it using the <a href="https://github.com/jeremymailen/kotlinter-gradle">kotlinder</a> Gradle plugin.</p>
+<p>To check the style of all Kotlin source files, use:</p>
+<pre><code>$ ./gradlew checkStyle
+</code></pre>
+<p>To format all Kotlin source files, use:</p>
+<pre><code>$ ./gradlew formatKotlin
+</code></pre>
+<h2 id="profiling"><a class="header" href="#profiling">Profiling</a></h2>
+<p>See <a href="/profiling/tracy-profiling.html">Tracy Profiling</a> to understand how Tracy can be used for profiling.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../ios/release.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../release-policy.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../android/android-tests.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -248,11 +271,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../ios/release.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../release-policy.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../android/android-tests.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

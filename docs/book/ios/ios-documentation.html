@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Design - MapLibre Native Developer Documentation</title>
+        <title>Documentation - MapLibre Native Developer Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -220,25 +220,46 @@
 }
 
 </style>
-<div class="mdbook-alerts mdbook-alerts-note">
-<p class="mdbook-alerts-title">
-  <span class="mdbook-alerts-icon"></span>
-  note
-</p>
-<p>These notes are partially outdated since the <a href="https://github.com/maplibre/maplibre-native/blob/main/design-proposals/2022-10-27-rendering-modularization.md">renderer modularization</a>.</p>
-</div>
-<h1 id="design"><a class="header" href="#design">Design</a></h1>
-<p>This section is dedicated to documenting current state of MapLibre Native as of end 2022. <a href="./archictural-problems-and-recommendations.html">Architectural Problems and Recommendations</a> section notes recommendations for future improvements from an architectural perspective.</p>
+<h1 id="ios-documentation"><a class="header" href="#ios-documentation">iOS Documentation</a></h1>
+<p>We use <a href="https://www.swift.org/documentation/docc">DocC</a> for the MapLibre iOS documentation. The live documentation site can be found <a href="https://maplibre.org/maplibre-native/ios/latest/documentation/maplibre/">here</a>.</p>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<p>You need to have <a href="https://github.com/aws/aws-cli">aws-cli</a> installed to download the resources from S3 (see below). Run the following command:</p>
+<pre><code>aws s3 sync --no-sign-request "s3://maplibre-native/ios-documentation-resources" "platform/ios/MapLibre.docc/Resources"
+</code></pre>
+<p>Then, to build the documentation locally, run the following command:</p>
+<pre><code>platform/ios/scripts/docc.sh preview
+</code></pre>
+<p>Resources like images should not be checked in but should be uploaded to the <a href="https://s3.eu-central-1.amazonaws.com/maplibre-native/index.html#ios-documentation-resources/">S3 Bucket</a>. You can share a <code>.zip</code> with all files that should be added in the PR.</p>
+<p>If you want to get direct access you need an AWS account to get permissions to upload files. Create an account and authenticate with aws-cli. Share the account ARN that you can get with</p>
+<pre><code>aws sts get-caller-identity
+</code></pre>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<p>The code samples in the documentation should ideally be compiled on CI so they do not go out of date.</p>
+<p>Fence your example code with</p>
+<pre><code class="language-swift">// #-example-code(LineTapMap)
+...
+// #-end-example-code
+</code></pre>
+<p>Prefix your documentation code block with</p>
+<pre><code class="language-md">&lt;!-- include-example(LineTapMap) --&gt;
+
+```swift
+...
+```
+</code></pre>
+<p>Then the code block will be updated when you run:</p>
+<pre><code class="language-sh">node scripts/update-ios-examples.mjs
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../ios/release.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../ios/ios-tests.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../ios/release.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -248,11 +269,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../ios/release.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../ios/ios-tests.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../ios/release.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

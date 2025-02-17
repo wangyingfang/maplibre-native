@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Design - MapLibre Native Developer Documentation</title>
+        <title>Documentation - MapLibre Native Developer Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -220,25 +220,43 @@
 }
 
 </style>
-<div class="mdbook-alerts mdbook-alerts-note">
-<p class="mdbook-alerts-title">
-  <span class="mdbook-alerts-icon"></span>
-  note
-</p>
-<p>These notes are partially outdated since the <a href="https://github.com/maplibre/maplibre-native/blob/main/design-proposals/2022-10-27-rendering-modularization.md">renderer modularization</a>.</p>
-</div>
-<h1 id="design"><a class="header" href="#design">Design</a></h1>
-<p>This section is dedicated to documenting current state of MapLibre Native as of end 2022. <a href="./archictural-problems-and-recommendations.html">Architectural Problems and Recommendations</a> section notes recommendations for future improvements from an architectural perspective.</p>
+<h1 id="documentation-for-maplibre-android"><a class="header" href="#documentation-for-maplibre-android">Documentation for MapLibre Android</a></h1>
+<h2 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h2>
+<p>We use Dokka for the MapLibre Android API documentation. The live documentation site can be found <a href="https://maplibre.org/maplibre-native/android/api/">here</a>.</p>
+<h2 id="examples-documentation"><a class="header" href="#examples-documentation">Examples Documentation</a></h2>
+<p>The documentation site with examples uses MkDocs along with <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>. You can check out the site <a href="https://maplibre.org/maplibre-native/android/examples/">here</a>.</p>
+<h3 id="building"><a class="header" href="#building">Building</a></h3>
+<p>To build the Examples Documentation you need to have Docker installed.</p>
+<p>From <code>platform/android</code>, run:</p>
+<pre><code>make mkdocs
+</code></pre>
+<p>Next, visit <a href="http://localhost:8000/maplibre-native/android/examples/"><code>http://localhost:8000/maplibre-native/android/examples/</code></a>.</p>
+<h3 id="snippets"><a class="header" href="#snippets">Snippets</a></h3>
+<p>We use <a href="https://facelessuser.github.io/pymdown-extensions/extensions/snippets/#snippet-sections">a Markdown extension for snippets</a>. This way code can be referenced instead of copy pasted into the documentation. This avoids code examples from becoming out of date or failing to compile. The syntax is as follows:</p>
+<pre><code class="language-kotlin">// --8&lt;-- [start:fun]
+fun double(x: Int): Int {
+    return 2 * x
+}
+// --8&lt;-- [end:fun]
+</code></pre>
+<p>Next, you'll be able to reference that piece of code in Markdown like so:</p>
+<pre><code>--8&lt;-- "example.kt:fun"
+</code></pre>
+<p>Where <code>example.kt</code> is the path to the file.</p>
+<h3 id="static-assets"><a class="header" href="#static-assets">Static Assets</a></h3>
+<p>Static assets are ideally uploaded to the <a href="https://maplibre-native.s3.eu-central-1.amazonaws.com/index.html#android-documentation-resources/">MapLibre Native S3 Bucket</a>.</p>
+<p>Please open an issue with the ARN of your AWS account to get upload privileges.</p>
+<p>You can use the macro <code>{{ s3_url("filename.example") }}</code> which will use a CDN instead of linking to the S3 bucket directly.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../ios/release.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../android/android-tests.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../android/benchmark.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -248,11 +266,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../ios/release.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../android/android-tests.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../android/benchmark.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

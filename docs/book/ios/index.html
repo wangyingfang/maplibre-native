@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Design - MapLibre Native Developer Documentation</title>
+        <title>iOS - MapLibre Native Developer Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -220,25 +220,62 @@
 }
 
 </style>
-<div class="mdbook-alerts mdbook-alerts-note">
+<h1 id="maplibre-ios-developer-guide"><a class="header" href="#maplibre-ios-developer-guide">MapLibre iOS Developer Guide</a></h1>
+<h2 id="bazel"><a class="header" href="#bazel">Bazel</a></h2>
+<p><a href="https://bazel.build/">Bazel</a> is used for building on iOS.</p>
+<p>You can generate an Xcode project thanks to <a href="https://github.com/MobileNativeFoundation/rules_xcodeproj">rules_xcodeproj</a> intergration.</p>
+<p>You need to install <a href="https://github.com/bazelbuild/bazelisk">bazelisk</a>, which is a wrapper around Bazel which ensures that the version specified in <code>.bazelversion</code> is used.</p>
+<pre><code>brew install bazelisk
+</code></pre>
+<h3 id="creating-configbzl"><a class="header" href="#creating-configbzl">Creating <code>config.bzl</code></a></h3>
+<p>Configure Bazel, otherwise the default config will get used.</p>
+<pre><code>cp platform/darwin/bazel/example_config.bzl platform/darwin/bazel/config.bzl
+</code></pre>
+<p>You need to set your <code>BUNDLE_ID_PREFIX</code> to be unique (ideally use a domain that you own in reverse domain name notation).</p>
+<p>You can keep leave the <code>APPLE_MOBILE_PROVISIONING_PROFILE_NAME</code> alone.</p>
+<p>Set the Team ID to the Team ID of your Apple Developer Account (paid or unpaid both work). If you do not know your Team ID, go to your <a href="https://developer.apple.com/account">Apple Developer account</a>, log in, and scroll down to find your Team ID.</p>
+<p>If you don't already have a developer account, continue this guide and let Xcode generate a provisioning profile for you. You will need to update the Team ID later once a certificate is generated.</p>
+<h2 id="create-the-xcode-project"><a class="header" href="#create-the-xcode-project">Create the Xcode Project</a></h2>
+<p>Run the following commands:</p>
+<pre><code>bazel run //platform/ios:xcodeproj --@rules_xcodeproj//xcodeproj:extra_common_flags="--//:renderer=metal"
+xed platform/ios/MapLibre.xcodeproj
+</code></pre>
+<p>Then once in Xcode, click on "MapLibre" on the left, then "App" under Targets, then "Signing &amp; Capabilities" in the tabbed menu.
+Confirm that no errors are shown.</p>
+<img width="921" alt="image" src="https://github.com/polvi/maplibre-native/assets/649392/a1ef30cb-97fc-429a-acee-194436f3fb8a">
+<p>Try to run the example App in the simulator and on a device to confirm your setup works.</p>
+<div class="mdbook-alerts mdbook-alerts-important">
 <p class="mdbook-alerts-title">
   <span class="mdbook-alerts-icon"></span>
-  note
+  important
 </p>
-<p>These notes are partially outdated since the <a href="https://github.com/maplibre/maplibre-native/blob/main/design-proposals/2022-10-27-rendering-modularization.md">renderer modularization</a>.</p>
+<p>The Bazel configuration files are the source of truth of the build configuration. All changes to the build settings need to be done through Bazel, not in Xcode.</p>
 </div>
-<h1 id="design"><a class="header" href="#design">Design</a></h1>
-<p>This section is dedicated to documenting current state of MapLibre Native as of end 2022. <a href="./archictural-problems-and-recommendations.html">Architectural Problems and Recommendations</a> section notes recommendations for future improvements from an architectural perspective.</p>
+<h3 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h3>
+<h4 id="provisioning-profiles"><a class="header" href="#provisioning-profiles">Provisioning Profiles</a></h4>
+<p>If you get a Python <code>KeyError</code> when processing provisioning profiles, you probably have some <em>really</em> old or corrupted profiles.</p>
+<p>Have a look through <code>~/Library/MobileDevice/Provisioning\ Profiles</code> and remove any expired profiles. Removing all profiles here can also resolve some issues.</p>
+<h4 id="cleaning-bazel-environments"><a class="header" href="#cleaning-bazel-environments">Cleaning Bazel environments</a></h4>
+<p>You should almost never have to do this, but sometimes problems can be solved with:</p>
+<pre><code>bazel clean --expunge
+</code></pre>
+<h2 id="using-bazel-from-the-command-line"><a class="header" href="#using-bazel-from-the-command-line">Using Bazel from the Command Line</a></h2>
+<p>It is also possible to build and run the test application in a simulator from the command line without opening Xcode.</p>
+<pre><code>bazel run //platform/ios:App --//:renderer=metal
+</code></pre>
+<p>You can also build targets from the command line. For example, if you want to build your own XCFramework, see the 'Build XCFramework' step in the <a href="../../.github/workflows/ios-ci.yml">iOS CI workflow</a>.</p>
+<h2 id="swift-app"><a class="header" href="#swift-app">Swift App</a></h2>
+<p>There is also an example app built with Swift instead of Objective-C. The target is called <code>MapLibreApp</code> and the source code lives in <code>platform/ios/app-swift</code>.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../ios/release.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../android/release.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../ios/ios-tests.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -248,11 +285,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../ios/release.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../android/release.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../design/ten-thousand-foot-view.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../ios/ios-tests.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
