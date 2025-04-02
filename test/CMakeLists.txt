@@ -41,6 +41,7 @@ add_library(
     ${PROJECT_SOURCE_DIR}/test/storage/offline_database.test.cpp
     ${PROJECT_SOURCE_DIR}/test/storage/offline_download.test.cpp
     ${PROJECT_SOURCE_DIR}/test/storage/online_file_source.test.cpp
+    ${PROJECT_SOURCE_DIR}/test/storage/pmtiles_file_source.test.cpp
     ${PROJECT_SOURCE_DIR}/test/storage/resource.test.cpp
     ${PROJECT_SOURCE_DIR}/test/storage/sqlite.test.cpp
     ${PROJECT_SOURCE_DIR}/test/style/conversion/conversion_impl.test.cpp
@@ -88,6 +89,7 @@ add_library(
     ${PROJECT_SOURCE_DIR}/test/util/async_task.test.cpp
     ${PROJECT_SOURCE_DIR}/test/util/bounding_volumes.test.cpp
     ${PROJECT_SOURCE_DIR}/test/util/camera.test.cpp
+    ${PROJECT_SOURCE_DIR}/test/util/color.test.cpp
     ${PROJECT_SOURCE_DIR}/test/util/geo.test.cpp
     ${PROJECT_SOURCE_DIR}/test/util/grid_index.test.cpp
     ${PROJECT_SOURCE_DIR}/test/util/hash.test.cpp

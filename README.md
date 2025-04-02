@@ -173,7 +173,7 @@ MapLibre Native can also be built on [Linux](platform/linux/README.md), [Windows
 
 ## Contributing
 
-> [!NOTE]  
+> [!NOTE]
 > This section is only relevant for people who want to contribute to MapLibre Native.
 
 MapLibre Native has at its core a C++ library. This is where the bulk of development is currently happening.
@@ -213,7 +213,7 @@ xed platform/ios/MapLibre.xcodeproj
 
 To generate and open the Xcode project.
 
-More information: [`platform/android/CONTRIBUTING.md`](platform/ios/CONTRIBUTING.md).
+More information: [`platform/ios/CONTRIBUTING.md`](platform/ios/CONTRIBUTING.md).
 
 ## Other Platforms
 

@@ -61,6 +61,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/storage/offline_database.cpp
         ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/storage/offline_download.cpp
         ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/storage/online_file_source.cpp
+        ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/storage/$<IF:$<BOOL:${MLN_WITH_PMTILES}>,pmtiles_file_source.cpp,pmtiles_file_source_stub.cpp>
         ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/storage/sqlite3.cpp
         ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/text/bidi.cpp
         ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/util/compression.cpp
@@ -149,7 +150,7 @@ target_include_directories(
 # this is needed because Android is not officially supported
 # https://discourse.cmake.org/t/error-when-crosscompiling-with-whole-archive-target-link/9394
 # https://cmake.org/cmake/help/latest/release/3.24.html#generator-expressions
-set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE 
+set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE
 "-Wl,--whole-archive <LIBRARY> -Wl,--no-whole-archive"
 )
 set(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE_SUPPORTED True)

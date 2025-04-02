@@ -366,6 +366,7 @@ void RenderSymbolLayer::transition(const TransitionParameters& parameters) {
     unevaluated = impl_cast(baseImpl).paint.transitioned(parameters, std::move(unevaluated));
     hasFormatSectionOverrides = SymbolLayerPaintPropertyOverrides::hasOverrides(
         impl_cast(baseImpl).layout.get<TextField>());
+    styleDependencies = unevaluated.getDependencies();
 }
 
 void RenderSymbolLayer::evaluate(const PropertyEvaluationParameters& parameters) {
@@ -1391,7 +1392,6 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
             default:
                 return "center";
         }
-
     };
     for (const RenderTile& tile : *renderTiles) {
         auto bucket = (SymbolBucket*)tile.getBucket(*baseImpl);
@@ -1401,11 +1401,15 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
         }
         const auto& evaluated = getEvaluated<SymbolLayerProperties>(renderData->layerProperties);
         auto textColor = evaluated.get<TextColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
-        auto textHaloColor = evaluated.get<TextHaloColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
-        auto textHaloWidth = evaluated.get<TextHaloWidth>().match(PaintPropertyVisitor<float>(geometryTileFeature, zoom));
+        auto textHaloColor = evaluated.get<TextHaloColor>().match(
+            PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
+        auto textHaloWidth = evaluated.get<TextHaloWidth>().match(
+            PaintPropertyVisitor<float>(geometryTileFeature, zoom));
         auto iconColor = evaluated.get<IconColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
-        auto iconHaloColor = evaluated.get<IconHaloColor>().match(PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
-        auto iconHaloWidth = evaluated.get<IconHaloWidth>().match(PaintPropertyVisitor<float>(geometryTileFeature, zoom));
+        auto iconHaloColor = evaluated.get<IconHaloColor>().match(
+            PaintPropertyVisitor<Color>(geometryTileFeature, zoom));
+        auto iconHaloWidth = evaluated.get<IconHaloWidth>().match(
+            PaintPropertyVisitor<float>(geometryTileFeature, zoom));
 
         auto partiallyEvaluatedTextSize = bucket->textSizeBinder->evaluateForZoom(zoom);
         auto partiallyEvaluatedIconSize = bucket->iconSizeBinder->evaluateForZoom(zoom);
@@ -1463,8 +1467,7 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
                 if (placedIconIndex) {
                     auto imageIcon = impl_cast(baseImpl).layout.get<IconImage>().match(
                         LayoutPropertyVisitor<style::expression::Image>(geometryTileFeature, zoom));
-                    if (imageIcon)
-                        properties.insert(std::make_pair("iconId", mapbox::feature::value(imageIcon->id())));
+                    if (imageIcon) properties.insert(std::make_pair("iconId", mapbox::feature::value(imageIcon->id())));
 
                     const auto& iconBuffer = symbolInstance.hasSdfIcon() ? bucket->sdfIcon : bucket->icon;
                     const PlacedSymbol& placedSymbol = iconBuffer.placedSymbols.at(*placedIconIndex);
