@@ -11,8 +11,12 @@ import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.google.gson.JsonArray
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
@@ -34,29 +38,29 @@ class MainActivity : ComponentActivity() {
     private var status = ""
     private var lastRequestedLabels = "[]"
 
-    private val statusChanged = StatusChangedWatcher { status = it; updateOutput() }
+    private val statusChanged = StatusChangedWatcher({ status = it; updateOutput() })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        hideSystemBars()
         mapView = findViewById(R.id.map_view)
         mapView.onCreate(savedInstanceState)
-
-        mapView.addOnCameraWillChangeListener(statusChanged)
-        mapView.addOnWillStartRenderingMapListener(statusChanged)
-        mapView.addOnWillStartLoadingMapListener(statusChanged)
-        mapView.addOnDidBecomeIdleListener(statusChanged)
-
         mapView.getMapAsync {
+            it.uiSettings.apply {
+                isLogoEnabled = false
+                isAttributionEnabled = false
+            }
             it.setMinZoomPreference(2.0)
             it.setMaxZoomPreference(20.0)
             it.setStyle(Style.Builder().fromJson(loadStyle(darkMode = false)))
             it.cameraPosition =
                 CameraPosition.Builder().target(LatLng(39.85911, 117.343539)).zoom(6.2).build()
         }
+        statusChanged.attachToMapView(mapView)
         optionsButton = findViewById(R.id.options_btn)
         optionsButton.setOnClickListener { v ->
-            showPopupMenu(v);
+            showPopupMenu(v)
         }
         inputEditText = findViewById(R.id.automation_input_text)
         submitButton = findViewById<Button?>(R.id.automation_submit_button).also {
@@ -74,6 +78,15 @@ class MainActivity : ComponentActivity() {
             }
         }
         outputText = findViewById(R.id.automation_output_text)
+    }
+
+    private fun hideSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        // Configure the behavior of the hidden system bars.
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        // Hide both the status bar and the navigation bar.
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
     }
 
     override fun onStart() {
@@ -102,11 +115,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        mapView.removeOnCameraWillChangeListener(statusChanged)
-        mapView.removeOnWillStartRenderingMapListener(statusChanged)
-        mapView.removeOnWillStartLoadingMapListener(statusChanged)
-        mapView.removeOnDidBecomeIdleListener(statusChanged)
-
+        statusChanged.detachFromMapView()
         mapView.onDestroy()
         super.onDestroy()
     }
@@ -192,24 +201,26 @@ class MainActivity : ComponentActivity() {
                 val pixels = map.projection.toScreenLocation(LatLng(geoPoint.latitude(), geoPoint.longitude()))
                 val distanceInPixels = calculateDistance(screenCenter.x, screenCenter.y, pixels.x, pixels.y)
                 val props = it.properties()!!
-
+                val textHaloWidth = props.get("textHaloWidth").getFloatOrDefault(0f)!!
+                val iconHaloWidth = props.get("iconHaloWidth").getFloatOrDefault(0f)!!
+                val anchorTypes = (props.get("anchorTypes") as? JsonArray)?.map { type -> type.asString }
                 mapOf(
                     "l" to arrayOf(geoPoint.latitude(), geoPoint.longitude()),
                     "d" to distanceInPixels,
                     "lid" to props.get("layerId").getStringOrDefault(),
                     "sl" to props.get("sourceLayer").getStringOrDefault(),
-                    // "t" to props.get("name").getStringOrDefault(),
+                    "ats" to anchorTypes,
                     "ft" to props.get("formatedText").getStringOrDefault(),
                     "ts" to props.get("textSize").getFloatOrDefault(),
-                    "tc" to props.get("textColor").getRgbaOrDefault(),
-                    "thw" to props.get("textHaloWidth").getFloatOrDefault(),
-                    "thc" to props.get("textHaloColor").getRgbaOrDefault(),
+                    "tc" to props.get("textColor").getRgbaOrDefault()?.toIntArray(),
+                    "thw" to if (textHaloWidth > 0.5f) textHaloWidth else null,
+                    "thc" to if (textHaloWidth > 0.5f) props.get("textHaloColor").getRgbaOrDefault()?.toIntArray() else null,
                     "iid" to props.get("iconId").getStringOrDefault(),
                     "is" to props.get("iconSize").getFloatOrDefault(),
-                    "ic" to props.get("iconColor").getRgbaOrDefault(),
-                    "ihw" to props.get("iconHaloWidth").getFloatOrDefault(),
-                    "ihc" to props.get("iconHaloColor").getRgbaOrDefault(),
-                    )
+                    "ic" to props.get("iconColor").getRgbaOrDefault()?.toIntArray(),
+                    "ihw" to if (iconHaloWidth > 0.5) iconHaloWidth else null,
+                    "ihc" to if (iconHaloWidth > 0.5) props.get("iconHaloColor").getRgbaOrDefault()?.toIntArray() else null,
+                )
             }
 
             val mapper = jacksonObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -230,7 +241,7 @@ class MainActivity : ComponentActivity() {
     private fun loadStyle(darkMode: Boolean): String =
         try {
             val styleId = if (darkMode) R.raw.bing_maps_v9_china_dark else R.raw.bing_maps_v9_china
-            ResourceUtils.readRawResource(this, styleId)
+            Utils.readRawResource(this, styleId)
         } catch (exception: Exception) {
             Timber.e(exception, "Can't load local file style")
             ""
@@ -255,7 +266,7 @@ class MainActivity : ComponentActivity() {
                     "\"bounds\":[${northWest.latitude},${northWest.longitude},${southEast.latitude},${southEast.longitude}]," +
                     "\"center\":[${loc?.latitude},${loc?.longitude}]," +
                     "\"labels\":$lastRequestedLabels," +
-                    "\"zoom\":${zoom}" +
+                    "\"zoom\":${zoom + 1}" +
                     "}"
             outputText.text = outputStr
             Timber.tag(TAG).i("outputStr=$outputStr")
@@ -267,6 +278,7 @@ class MainActivity : ComponentActivity() {
             super.beginCommands()
             lastRequestedLabels = "[]"
         }
+
         override fun setAutomationMode(enable: Boolean) {
             Timber.tag(TAG).i("setAutomationMode(enable: ${enable})")
             // nothing to do.
@@ -276,14 +288,14 @@ class MainActivity : ComponentActivity() {
             Timber.tag(TAG).i("setScene(scene: ${scene})")
             mapView.getMapAsync {
                 it.cameraPosition =
-                    CameraPosition.Builder().target(LatLng(scene.lat, scene.lon)).zoom(scene.zoom)
+                    CameraPosition.Builder().target(LatLng(scene.lat, scene.lon)).zoom(scene.zoom - 1)
                         .build()
             }
         }
 
         override fun setTheme(themeName: String) {
             Timber.tag(TAG).i("setTheme(themeName: ${themeName})")
-            val isDarkStyle = themeName == "roadDark"
+            val isDarkStyle = themeName.lowercase().indexOf("dark") > -1;
             mapView.getMapAsync {
                 setStyle(isDarkStyle)
             }
@@ -295,7 +307,7 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun setStyle(index: Int) {
-            val i = max(0, index - 1)
+            val i = max(0, index)
             selectFilter(i)
         }
 

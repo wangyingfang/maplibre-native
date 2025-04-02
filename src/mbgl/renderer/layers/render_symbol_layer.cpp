@@ -1,3 +1,5 @@
+#include <ranges>
+
 #include <mbgl/renderer/layers/render_symbol_layer.hpp>
 
 #include <mbgl/gfx/cull_face_mode.hpp>
@@ -1367,10 +1369,34 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
                                              float zoom) const {
     RenderLayer::evaluateLayoutExtras(indexedFeature, geometryTileFeature, properties, zoom);
 
+    auto anchorTypeToString = [](const SymbolAnchorType anchorType) -> std::string {
+        switch (anchorType) {
+            case SymbolAnchorType::Left:
+                return "left";
+            case SymbolAnchorType::Right:
+                return "right";
+            case SymbolAnchorType::Top:
+                return "top";
+            case SymbolAnchorType::Bottom:
+                return "bottom";
+            case SymbolAnchorType::TopLeft:
+                return "top-left";
+            case SymbolAnchorType::TopRight:
+                return "top-right";
+            case SymbolAnchorType::BottomLeft:
+                return "bottom-left";
+            case SymbolAnchorType::BottomRight:
+                return "bottom-right";
+            case SymbolAnchorType::Center:
+            default:
+                return "center";
+        }
+
+    };
     for (const RenderTile& tile : *renderTiles) {
         auto bucket = (SymbolBucket*)tile.getBucket(*baseImpl);
         auto renderData = tile.getLayerRenderData(*baseImpl);
-        if (!bucket || !renderData) {
+        if (!bucket || bucket->bucketInstanceId != indexedFeature.getBucketInstanceId() || !renderData) {
             continue;
         }
         const auto& evaluated = getEvaluated<SymbolLayerProperties>(renderData->layerProperties);
@@ -1401,8 +1427,8 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
                             formatedText << section.text;
                         }
                         if (formatedText.tellp() > 0) {
-                            properties.insert(
-                                std::make_pair("formatedText", mapbox::feature::value(formatedText.str())));
+                            auto text = formatedText.str();
+                            properties.insert(std::make_pair("formatedText", mapbox::feature::value(text)));
                         }
                     }
 
@@ -1423,6 +1449,16 @@ void RenderSymbolLayer::evaluateLayoutExtras(const RefIndexedSubfeature& indexed
                                                                      mapbox::feature::value(textHaloColor->g),
                                                                      mapbox::feature::value(textHaloColor->b),
                                                                      mapbox::feature::value(textHaloColor->a)}));
+
+                    auto textVariableAnchorOffset = symbolInstance.getTextVariableAnchorOffset();
+                    if (textVariableAnchorOffset && textVariableAnchorOffset->size()) {
+                        std::vector<mapbox::feature::value> anchorTypes;
+                        for (auto anchorOffset : *textVariableAnchorOffset) {
+                            std::string anchorType = anchorTypeToString(anchorOffset.anchorType);
+                            anchorTypes.push_back(mapbox::feature::value(anchorType));
+                        }
+                        properties.insert(std::make_pair("anchorTypes", anchorTypes));
+                    }
                 }
                 if (placedIconIndex) {
                     auto imageIcon = impl_cast(baseImpl).layout.get<IconImage>().match(

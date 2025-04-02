@@ -2,10 +2,12 @@ package org.maplibre.android.testapp.activity.benchmark
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
+import android.os.PowerManager
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
@@ -26,6 +28,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapLibreMap.CancelableCallback
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.testapp.R
+import org.maplibre.android.testapp.styles.TestStyles
 import org.maplibre.android.testapp.utils.BenchmarkInputData
 import org.maplibre.android.testapp.utils.BenchmarkResult
 import org.maplibre.android.testapp.utils.BenchmarkRun
@@ -149,19 +152,19 @@ class BenchmarkActivity : AppCompatActivity() {
         return BenchmarkInputData(
             styleNames = listOf(
                 "AWS Open Data Standard Light",
-                "Facebook Light",
+//                "Facebook Light",
                 "Americana",
-                "Protomaps Light",
-                "Versatiles Colorful",
-                "OpenFreeMap Bright"
+//                "Protomaps Light",
+//                "Versatiles Colorful",
+               "OpenFreeMap Bright"
             ),
             styleURLs = listOf(
                 "https://maps.geo.us-east-2.amazonaws.com/maps/v0/maps/OpenDataStyle/style-descriptor?key=v1.public.eyJqdGkiOiI1NjY5ZTU4My0yNWQwLTQ5MjctODhkMS03OGUxOTY4Y2RhMzgifR_7GLT66TNRXhZJ4KyJ-GK1TPYD9DaWuc5o6YyVmlikVwMaLvEs_iqkCIydspe_vjmgUVsIQstkGoInXV_nd5CcmqRMMa-_wb66SxDdbeRDvmmkpy2Ow_LX9GJDgL2bbiCws0wupJPFDwWCWFLwpK9ICmzGvNcrPbX5uczOQL0N8V9iUvziA52a1WWkZucIf6MUViFRf3XoFkyAT15Ll0NDypAzY63Bnj8_zS8bOaCvJaQqcXM9lrbTusy8Ftq8cEbbK5aMFapXRjug7qcrzUiQ5sr0g23qdMvnKJQFfo7JuQn8vwAksxrQm6A0ByceEXSfyaBoVpFcTzEclxUomhY.NjAyMWJkZWUtMGMyOS00NmRkLThjZTMtODEyOTkzZTUyMTBi",
-                "https://external.xx.fbcdn.net/maps/vt/style/canterbury_1_0/?locale=en_US",
+//                "https://external.xx.fbcdn.net/maps/vt/style/canterbury_1_0/?locale=en_US",
                 "https://americanamap.org/style.json",
-                "https://api.protomaps.com/styles/v2/light.json?key=e761cc7daedf832a",
-                "https://tiles.versatiles.org/assets/styles/colorful.json",
-                "https://tiles.openfreemap.org/styles/bright"
+//                "https://api.protomaps.com/styles/v2/light.json?key=e761cc7daedf832a",
+//                "https://tiles.versatiles.org/assets/styles/colorful.json",
+               "https://tiles.openfreemap.org/styles/bright"
             )
         )
     }
@@ -187,24 +190,47 @@ class BenchmarkActivity : AppCompatActivity() {
         }
     }
 
+    private fun getThermalStatus(): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            return powerManager.currentThermalStatus
+        }
+
+        return -1;
+    }
+
     private fun setupMapView() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            powerManager.addThermalStatusListener {
+                    status -> println("Thermal status changed $status")
+            }
+        }
+        
         mapView = findViewById<View>(R.id.mapView) as MapView
         mapView.getMapAsync { maplibreMap: MapLibreMap ->
             val benchmarkResult = BenchmarkResult(arrayListOf())
 
+            val benchmarkSlowDuration = 70000
+            val benchmarkFastDuration = 15000
+
             lifecycleScope.launch {
                 val benchmarkRuns = inputData.styleNames.zip(inputData.styleURLs).flatMap { (styleName, styleUrl) ->
                     listOf(
-                        BenchmarkRun(styleName, styleUrl, true),
-                        BenchmarkRun(styleName, styleUrl, false)
+                        BenchmarkRun(styleName, styleUrl, true, benchmarkSlowDuration),
+                        BenchmarkRun(styleName, styleUrl, false, benchmarkSlowDuration)
                     )
                 }.toTypedArray()
-                val benchmarkIterations = 5
+                val benchmarkIterations = 4
                 for (i in 0 until benchmarkIterations) {
                     for (benchmarkRun in benchmarkRuns) {
-                        val benchmarkRunResult = doBenchmarkRun(maplibreMap, benchmarkRun)
+                        val benchmarkRunResult = doBenchmarkRun(
+                            maplibreMap,
+                            // do one fast run to cache needed tiles
+                            if (i == 0)  benchmarkRun.copy(duration = benchmarkFastDuration) else benchmarkRun)
                         val benchmarkPair = Pair(benchmarkRun, benchmarkRunResult)
-                        benchmarkResult.runs.add(benchmarkPair)
+                        // don't store results for fast run
+                        if (i != 0) benchmarkResult.runs.add(benchmarkPair)
                         println(jsonPayload(BenchmarkResult(arrayListOf(benchmarkPair))))
                     }
                 }
@@ -238,7 +264,7 @@ class BenchmarkActivity : AppCompatActivity() {
         for (place in PLACES) {
             maplibreMap.animateCameraSuspend(
                 CameraUpdateFactory.newLatLngZoom(place, 14.0),
-                10000
+                benchmarkRun.duration
             )
         }
         val endTime = System.nanoTime()
@@ -246,7 +272,7 @@ class BenchmarkActivity : AppCompatActivity() {
 
         mapView.removeOnDidFinishRenderingFrameListener(listener)
 
-        return BenchmarkRunResult(fps, encodingTimeStore, renderingTimeStore)
+        return BenchmarkRunResult(fps, encodingTimeStore, renderingTimeStore, getThermalStatus())
     }
 
     override fun onStart() {
@@ -305,10 +331,10 @@ class BenchmarkActivity : AppCompatActivity() {
             LatLng(38.9072, -77.0369), // DC
             LatLng(52.3702, 4.8952), // AMS
             LatLng(60.1699, 24.9384), // HEL
-            LatLng(-13.1639, -74.2236), // AYA
-            LatLng(52.5200, 13.4050), // BER
-            LatLng(12.9716, 77.5946), // BAN
-            LatLng(31.2304, 121.4737) // SHA
+//            LatLng(-13.1639, -74.2236), // AYA
+//            LatLng(52.5200, 13.4050), // BER
+//            LatLng(12.9716, 77.5946), // BAN
+//            LatLng(31.2304, 121.4737) // SHA
         )
     }
 }

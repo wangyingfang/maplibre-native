@@ -16,7 +16,7 @@ import org.maplibre.android.style.layers.SymbolLayer
 class FilterCondition(val pattern: String, val expression: String? = null) {}
 data class FilterExpression(val expression: String, val negative: Boolean)
 data class FilterLayer(val id: String, val type: String, val sourceLayer: String)
-data class DefaultLayerFilter(val id: String, val visible: Boolean, val expression: String?)
+data class LayerFilterState(val id: String, val visible: Boolean, val expression: String?)
 
 class Filter(val chain: FilterChain, condition: FilterCondition, val negative: Boolean?) {
 
@@ -42,18 +42,6 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
     }
 
     fun doFilter(fl: FilterLayer): Boolean {
-        val getFilterExpression: (Layer) -> Expression? = {
-            when (it) {
-                is CircleLayer -> it.filter
-                is FillExtrusionLayer -> it.filter
-                is FillLayer -> it.filter
-                is HeatmapLayer -> it.filter
-                is LineLayer -> it.filter
-                is SymbolLayer -> it.filter
-                else -> null
-            }
-        }
-
         val map = chain.map ?: throw RuntimeException("map instance not been set")
         if (!isLayerMatched(fl)) {
             return false
@@ -64,14 +52,13 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
         var dlf = dlfs[fl.id]
         if (dlf == null) {
             val visible = layer.visibility.getValue() != "none"
-            val expression = getFilterExpression(layer)
+            val expression = layer.getFilterExpression()
             val exp = expression?.toString() ?: ""
-            dlf = DefaultLayerFilter(fl.id, visible, exp)
+            dlf = LayerFilterState(fl.id, visible, exp)
             dlfs[layer.id] = dlf
         }
-        try {
+        if (layer.isVectorLayer()) {
             // Some layers supports filter, so all conditions need to be applied.
-            val setFilterMethod = layer.javaClass.getMethod("setFilter", Expression::class.java)
             val positives = mutableListOf<Expression>()
             val negatives = mutableListOf<Expression>()
             for (condition in conditions) {
@@ -83,27 +70,26 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
                     positives.add(exp ?: Expression.literal(true))
                 }
             }
-            var combinedExpression =
-                if (positives.isEmpty()) Expression.literal(true) else Expression.any(*positives.toTypedArray())
+            var expression: Expression? = null
+            if (positives.isNotEmpty()) {
+                expression = if (positives.size == 1) positives[0] else Expression.any(*positives.toTypedArray())
+            }
             if (negatives.isNotEmpty()) {
-                combinedExpression =
-                    Expression.all(*positives.toTypedArray(), *negatives.toTypedArray())
+                if (expression != null) {
+                    negatives.add(expression)
+                }
+                expression = if (negatives.size == 1) negatives[0] else Expression.all(*negatives.toTypedArray())
             }
             if (!dlf.expression.isNullOrEmpty()) {
-                combinedExpression = Expression.all(
-                    Expression.Converter.convert(dlf.expression!!),
-                    combinedExpression
-                )
+                val defaultExpression = Expression.Converter.convert(dlf.expression!!)
+                expression = if (expression != null) Expression.all(defaultExpression, expression) else defaultExpression
             }
-            setFilterMethod.invoke(layer, combinedExpression)
-        } catch (ex: NoSuchMethodException) {
+            layer.setFilterExpression(expression ?: Expression.literal(true))
+        } else {
             // Some layers don't support filter and can only be set to visible or hidden, so only the last condition needs to be applied.
             val lastCondition = conditions.last()
             layer.setProperties(
-                PropertyValue(
-                    "visibility",
-                    if (lastCondition.negative) "none" else "visible"
-                )
+                PropertyValue("visibility", if (lastCondition.negative) "none" else "visible")
             )
         }
         return true
@@ -112,7 +98,7 @@ class Filter(val chain: FilterChain, condition: FilterCondition, val negative: B
 
 class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null) {
     companion object {
-        val defaultLayerFilters = mutableMapOf<String, DefaultLayerFilter>()
+        val defaultLayerFilters = mutableMapOf<String, LayerFilterState>()
         var defaultVisibleLayers = listOf<FilterLayer>()
 
         fun resetAfterStyleChanged() {
@@ -143,33 +129,19 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
         return this
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun getDefaultVisibleLayers(): List<FilterLayer> {
         val map = this.map ?: throw RuntimeException("map instance not been set")
 
-        val getSourceLayer: (Layer) -> String = {
-            when (it) {
-                is CircleLayer -> it.sourceLayer
-                is FillExtrusionLayer -> it.sourceLayer
-                is FillLayer -> it.sourceLayer
-                is HeatmapLayer -> it.sourceLayer
-                is HillshadeLayer -> it.sourceLayer
-                is LineLayer -> it.sourceLayer
-                is RasterLayer -> it.sourceLayer
-                is SymbolLayer -> it.sourceLayer
-                else -> ""
-            }
-        }
-
         if (defaultVisibleLayers.isEmpty()) {
+            val backgroundLayerId = "microsoft.bing.maps.base.land"
+
+            // Saves the IDs of layers that are displayed by default, which is used to restore the default state of
+            // layers that should not be affected when switching filters.
             defaultVisibleLayers = map.style?.layers
-                ?.filter { it.javaClass.simpleName != "BackgroundLayer" && it.visibility.getValue() != "none" /* NOTE bing maps custom metadata 'delayLoad' */ }
-                ?.map {
-                    FilterLayer(
-                        it.id,
-                        it.javaClass.simpleName,
-                        getSourceLayer(it)
-                    )
-                } ?: listOf()
+                ?.filter { it.id != backgroundLayerId && it.visibility.getValue() != "none" }
+                ?.map { FilterLayer(it.id, it.javaClass.simpleName, it.getSourceLayer()) }
+                ?: listOf()
         }
         return defaultVisibleLayers
     }
@@ -188,17 +160,13 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
         for (fl in layers.filter { !layerIdsUpdated.contains(it.id) }) {
             val dlf = dlfs[fl.id] ?: continue
             val layer = map.style?.layers?.find { it.id == fl.id } ?: throw RuntimeException("The specified layer#${fl.id} could not found.")
-            try {
-                val setFilterMethod = layer.javaClass.getMethod("setFilter", Expression::class.java)
+            if (layer.isVectorLayer()) {
                 val exp = if (dlf.expression.isNullOrEmpty()) Expression.literal(true)
                 else Expression.Converter.convert(dlf.expression)
-                setFilterMethod.invoke(layer, exp)
-            } catch (ex: NoSuchMethodException) {
+                layer.setFilterExpression(exp)
+            } else {
                 layer.setProperties(
-                    PropertyValue(
-                        "visibility",
-                        if (!dlf.visible) "none" else "visible"
-                    )
+                    PropertyValue("visibility", if (!dlf.visible) "none" else "visible")
                 )
             }
         }
@@ -207,8 +175,11 @@ class FilterChain(condition: FilterCondition? = null, negative: Boolean? = null)
 
 val filterConditions = mapOf(
     "default" to listOf(FilterCondition("microsoft\\.bing.maps\\..*")),
-    "base" to listOf(FilterCondition("microsoft\\.bing.maps\\.baseFeature\\.[\\w\\d\\-_]+_fill;")),
-    "raster" to listOf(FilterCondition("<type:raster>")),
+    "land" to listOf(FilterCondition("microsoft.bing.maps.baseFeature.vector_land")),
+    "base" to listOf(FilterCondition("microsoft\\.bing.maps\\.baseFeature\\.[\\w\\d\\-_]+;")),
+    // "reserve" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.(baseFeature|labels)\\.[\\w\\d\\-_]+;reserve|golf_course")),
+    "reserve" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.baseFeature\\.[\\w\\d\\-_]+;reserve|golf_course")),
+    "buildings" to listOf(FilterCondition("microsoft.bing.maps.buildings.buildings")),
     "hillShading" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.hillShading\\.hillShading;")),
 
     "water" to listOf(FilterCondition("microsoft.bing.maps.baseFeature.generic_water_feature_fill")),
@@ -225,6 +196,7 @@ val filterConditions = mapOf(
     "countryRegion" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.roads\\.[\\w\\d\\-_]+;country_region")),
     "countryRegionName" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;country_region")),
 
+    "island" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.baseFeature\\.[\\w\\d\\-_]+;island")),
     "islandName" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;island")),
 
     "cityName" to listOf(
@@ -243,7 +215,14 @@ val filterConditions = mapOf(
         // 其它增补城市（已确定：丹东、东港市、二连浩特）
         FilterCondition("microsoft\\.bing\\.maps\\.labels\\.generic_label_orientation_[\\w\\d\\-_]+_(labelonly|iconlabel)"),
     ),
-    "capitalCityName" to listOf(FilterCondition("microsoft\\.bing\\.maps\\.labels\\.generic_(sov_capital|beijing)_(labelonly|iconlabel);")),
+    "capitalCityName" to listOf(
+        FilterCondition("microsoft\\.bing\\.maps\\.labels\\.generic_(sov_capital|beijing)_(labelonly|iconlabel);"),
+        // 其它增补城市（已确定：加德满都、伊斯兰堡）
+        FilterCondition(
+            "microsoft\\.bing\\.maps\\.labels\\.generic_label_orientation_[\\w\\d\\-_]+_(labelonly|iconlabel)",
+            "[\"==\",[\"get\",\"cn-ppl\"],\"sovcap\"]"
+        ),
+    ),
     "admin1CityName" to listOf(
         FilterCondition(
             "microsoft\\.bing\\.maps\\.labels\\.generic_populated_place_(labelonly|iconlabel)",
@@ -303,13 +282,19 @@ val filterConditions = mapOf(
     "road" to listOf(
         FilterCondition("microsoft\\.bing\\.maps\\.roads\\.[\\w\\d\\-_]+;road[\\w\\d\\-_]*|railway[\\w\\d\\-_]*|tramway"),
     ),
+    "railway" to listOf(
+        FilterCondition("microsoft\\.bing\\.maps\\.roads\\.[\\w\\d\\-_]+;railway[\\w\\d\\-_]*"),
+    ),
     "roadName" to listOf(
-        FilterCondition("microsoft\\.bing\\.maps\\.labels\\..+_line_.+;road[\\w\\d\\-_]*|railway[\\w\\d\\-_]*|tramway"),
+        FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;road[\\w\\d\\-_]*|railway[\\w\\d\\-_]*|tramway"),
+    ),
+    "railwayName" to listOf(
+        FilterCondition("microsoft\\.bing\\.maps\\.labels\\.[\\w\\d\\-_]+;railway[\\w\\d\\-_]*"),
     ),
     "roadShield" to listOf(
         FilterCondition("microsoft\\.bing\\.maps\\.labels\\..+_road_shield.*;road"),
     ),
-    "landmark" to  listOf(
+    "landmark" to listOf(
         FilterCondition("microsoft\\.bing\\.maps\\.labels\\..+_landmark(_\\w+)?"),
     ),
 )

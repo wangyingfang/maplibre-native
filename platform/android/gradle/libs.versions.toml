@@ -33,11 +33,6 @@ kotlinxSerializationJson = "1.6.0"
 kotlinxCoroutines = { strictly = "[1.0, 2.0[" }
 
 androidGradlePlugin = "8.6.0"
-coreKtx = "1.13.1"
-lifecycleRuntimeKtx = "2.8.6"
-activityCompose = "1.9.3"
-kotlinVersion = "2.0.0"
-composeBom = "2024.04.01"
 
 [libraries]
 kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -87,26 +82,14 @@ androidxTestExtJUnit = { group = "androidx.test.ext", name = "junit", version = 
 androidxTestCoreKtx = { group = "androidx.test", name = "core-ktx", version = "1.6.1" }
 kotlinxSerializationJson = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.7.2" }
 
-androidGradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin"}
-coreKtx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-lifecycleRuntimeKtx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-activityCompose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-composeBom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-ui = { group = "androidx.compose.ui", name = "ui" }
-uiGraphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-uiTooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-uiToolingPreview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-uiTestManifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-uiTestJunit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-material3 = { group = "androidx.compose.material3", name = "material3" }
-fasterxmlJacksonModuleKotlin = {group = "com.fasterxml.jackson.module", name="jackson-module-kotlin", version="2.9.8" }
+androidGradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+
 
 [plugins]
 nexusPublishPlugin = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
 kotlinter = { id = "org.jmailen.kotlinter", version = "4.4.1" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version = "2.0.20" }
-dokka = { id = "org.jetbrains.dokka", version = "1.9.20" }
+dokka = { id = "org.jetbrains.dokka", version = "2.0.0-Beta" }
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.0.20" }
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinVersion" }
