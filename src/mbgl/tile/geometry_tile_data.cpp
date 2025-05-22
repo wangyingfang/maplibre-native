@@ -2,6 +2,8 @@
 #include <mbgl/tile/tile_id.hpp>
 #include <mbgl/math/clamp.hpp>
 #include <mbgl/util/instrumentation.hpp>
+#include <mbgl/util/logging.hpp>
+#include <mbgl/util/string.hpp>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -46,6 +48,7 @@ static LinearRing<int32_t> toWagyuPath(const GeometryCoordinates& ring) {
 static GeometryCollection toGeometryCollection(MultiPolygon<int16_t>&& multipolygon) {
     MLN_TRACE_FUNC();
 
+    mbgl::Log::Info(mbgl::Event::General, "BenchmarkRunner finished with status: " + mbgl::util::toString(multipolygon.size()));
     GeometryCollection result;
     for (auto& polygon : multipolygon) {
         for (auto& ring : polygon) {

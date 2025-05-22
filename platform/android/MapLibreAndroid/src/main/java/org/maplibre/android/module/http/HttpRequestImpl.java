@@ -132,7 +132,12 @@ public class HttpRequestImpl implements HttpRequest {
     @Override
     public void onResponse(@NonNull Call call, @NonNull Response response) {
       if (response.isSuccessful()) {
-        HttpLogger.log(Log.VERBOSE, String.format("[HTTP] Request was successful (code = %s).", response.code()));
+        String url = call.request().url().toString();
+        HttpLogger.log(Log.DEBUG, String.format("[HTTP] %s Request was successful (code = %s).", call.request().url(), response.code()));
+        if (url.startsWith("https://dynamic.int2.tiles.ditu.live-int.com/comp/ch") && !url.contains("3-3-2.mvt"))
+        {
+          return;
+        }
       } else {
         // We don't want to call this unsuccessful because a 304 isn't really an error
         String message = !TextUtils.isEmpty(response.message()) ? response.message() : "No additional information";

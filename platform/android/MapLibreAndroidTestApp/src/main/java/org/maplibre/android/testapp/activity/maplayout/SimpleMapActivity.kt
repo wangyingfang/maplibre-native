@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.*
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.utils.ApiKeyUtils
@@ -30,7 +32,8 @@ class SimpleMapActivity : AppCompatActivity() {
             val key = ApiKeyUtils.getApiKey(applicationContext)
             if (key == null || key == "YOUR_API_KEY_GOES_HERE") {
                 it.setStyle(
-                    Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
+                    //Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")
+                    Style.Builder().fromUri("https://dynamic.int2.tiles.ditu.live-int.com/comp/stl?ods=mvt&mbxs=33B050CC-BA4E-4350-A5B7-4171AEC234A2&og=1&mkt=zh-cn,en-us&ur=cn&features=hideraster,sptxtfittf&v=9.33&type=base,traffic&layers=modefv")
                 )
             } else {
                 val styles = Style.getPredefinedStyles()
@@ -39,6 +42,13 @@ class SimpleMapActivity : AppCompatActivity() {
                     it.setStyle(Style.Builder().fromUri(styleUrl))
                 }
             }
+
+            it.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(54.946754,-6.300939),
+                    3.5
+                )
+            )
         }
     }
 
