@@ -1,5 +1,7 @@
 #include <mbgl/gfx/fill_generator.hpp>
 #include <mbgl/gfx/polyline_generator.hpp>
+#include <mbgl/util/logging.hpp>
+#include <mbgl/util/string.hpp>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -135,6 +137,7 @@ void generateFillAndOutineBuffers(const GeometryCollection& geometry,
 
         std::size_t totalVertices = totalVerticesCheck(polygon);
         std::size_t startVertices = vertices.elements();
+        mbgl::Log::Info(mbgl::Event::General, "Debug generateFillAndOutineBuffers polygon size: " + mbgl::util::toString(polygon.size()));
 
         for (const auto& ring : polygon) {
             std::size_t base = vertices.elements();

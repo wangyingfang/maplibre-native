@@ -185,8 +185,33 @@ public:
             const PatternLayerMap& patterns = patternFeature.patterns;
             const GeometryCollection& geometries = feature->getGeometries();
 
+            std::string bktValue = "";
+            auto bktProperty = feature->getValue("bkt");
+            if (bktProperty) {
+                // Convert the property value to string
+                if (bktProperty->is<std::string>()) {
+                    bktValue = bktProperty->get<std::string>();
+                } else if (bktProperty->is<int64_t>()) {
+                    bktValue = mbgl::util::toString(bktProperty->get<int64_t>());
+                } else if (bktProperty->is<double>()) {
+                    bktValue = mbgl::util::toString(bktProperty->get<double>());
+                } else if (bktProperty->is<bool>()) {
+                    bktValue = bktProperty->get<bool>() ? "true" : "false";
+                }
+            }
+            if (bktValue == "1809")
+            {
+                mbgl::Log::Info(mbgl::Event::General, "Debug Found feature with bkt=1809, feature index: " + mbgl::util::toString(i));
+                
+                // Log additional feature information
+                mbgl::Log::Info(mbgl::Event::General, "Debug Geometry collection size: " + mbgl::util::toString(geometries.size()));
+            }
             bucket->addFeature(*feature, geometries, patternPositions, patterns, i, canonical);
             featureIndex->insert(geometries, i, sourceLayerID, bucketLeaderID);
+            if (bktValue == "1809")
+            {
+                mbgl::Log::Info(mbgl::Event::General, "Debug add feature");
+            }
         }
         if (bucket->hasData()) {
             for (const auto& pair : layerPropertiesMap) {

@@ -89,9 +89,11 @@ std::vector<GeometryCollection> classifyRings(const GeometryCollection& rings) {
 
     GeometryCollection polygon;
     int8_t ccw = 0;
-
+    mbgl::Log::Info(mbgl::Event::General, "debug classifyRings begin all rings: " + mbgl::util::toString(rings.size()));
     for (const auto& ring : rings) {
         double area = signedArea(ring);
+        // mbgl::Log::Info(mbgl::Event::General, "debug classifyRings ring size: " + mbgl::util::toString(ring.size()) + ", area: " + mbgl::util::toString(area));
+
         if (area == 0) continue;
 
         if (ccw == 0) {
@@ -99,6 +101,8 @@ std::vector<GeometryCollection> classifyRings(const GeometryCollection& rings) {
         }
 
         if (ccw == (area < 0 ? -1 : 1) && !polygon.empty()) {
+            mbgl::Log::Info(mbgl::Event::General, "debug classifyRings insert polygon: " + mbgl::util::toString(polygons.size()));
+
             polygons.emplace_back(std::move(polygon));
             polygon = GeometryCollection();
         }
@@ -109,6 +113,8 @@ std::vector<GeometryCollection> classifyRings(const GeometryCollection& rings) {
     if (!polygon.empty()) {
         polygons.emplace_back(std::move(polygon));
     }
+
+    mbgl::Log::Info(mbgl::Event::General, "debug classifyRings end all rings: " + mbgl::util::toString(polygons.size()));
 
     return polygons;
 }
@@ -270,6 +276,8 @@ GeometryCollection convertGeometry(const Feature::geometry_type& geometryTileFea
                 for (const auto& r : pg) {
                     LinearRing<int16_t> ring;
                     ring.reserve(r.size());
+                    mbgl::Log::Info(mbgl::Event::General, "debug convertGeometry ring size: " + mbgl::util::toString(ring.size()));
+
                     for (const auto& p : r) {
                         ring.emplace_back(latLonToTileCoodinates(p));
                     }
