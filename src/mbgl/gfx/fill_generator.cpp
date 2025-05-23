@@ -137,12 +137,15 @@ void generateFillAndOutineBuffers(const GeometryCollection& geometry,
 
         std::size_t totalVertices = totalVerticesCheck(polygon);
         std::size_t startVertices = vertices.elements();
-        mbgl::Log::Info(mbgl::Event::General, "Debug generateFillAndOutineBuffers polygon size: " + mbgl::util::toString(polygon.size()));
 
         for (const auto& ring : polygon) {
             std::size_t base = vertices.elements();
             std::size_t nVertices = addRingVertices(vertices, ring);
             addOutlineIndices(base, nVertices, lineSegments, lineIndexes);
+            if (ring.size() > 100)
+            {
+                mbgl::Log::Info(mbgl::Event::General, "Debug generateFillAndOutineBuffers ring size: " + mbgl::util::toString(ring.size()) + "vertices: " + mbgl::util::toString(nVertices));
+            }
         }
 
         std::vector<uint32_t> indices = mapbox::earcut(polygon);

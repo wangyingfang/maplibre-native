@@ -101,7 +101,9 @@ std::vector<GeometryCollection> classifyRings(const GeometryCollection& rings) {
         }
 
         if (ccw == (area < 0 ? -1 : 1) && !polygon.empty()) {
-            mbgl::Log::Info(mbgl::Event::General, "debug classifyRings insert polygon: " + mbgl::util::toString(polygons.size()));
+            if (ring.size() > 100) {
+                mbgl::Log::Info(mbgl::Event::General, "debug classifyRings insert ring: " + mbgl::util::toString(polygons.size()) + "ring size: " +  mbgl::util::toString(ring.size()));
+            }
 
             polygons.emplace_back(std::move(polygon));
             polygon = GeometryCollection();
