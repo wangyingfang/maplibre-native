@@ -89,7 +89,8 @@ std::vector<GeometryCollection> classifyRings(const GeometryCollection& rings) {
 
     GeometryCollection polygon;
     int8_t ccw = 0;
-    mbgl::Log::Info(mbgl::Event::General, "debug classifyRings begin all rings: " + mbgl::util::toString(rings.size()));
+    mbgl::Log::Info(mbgl::Event::General,
+                    "debug classifyRings begin all rings: " + mbgl::util::toString(rings.size()));
     for (const auto& ring : rings) {
         double area = signedArea(ring);
         // mbgl::Log::Info(mbgl::Event::General, "debug classifyRings ring size: " + mbgl::util::toString(ring.size()) + ", area: " + mbgl::util::toString(area));
@@ -101,22 +102,22 @@ std::vector<GeometryCollection> classifyRings(const GeometryCollection& rings) {
         }
 
         if (ccw == (area < 0 ? -1 : 1) && !polygon.empty()) {
-            if (ring.size() > 100) {
-                mbgl::Log::Info(mbgl::Event::General, "debug classifyRings insert ring: " + mbgl::util::toString(polygons.size()) + "ring size: " +  mbgl::util::toString(ring.size()));
-            }
-
             polygons.emplace_back(std::move(polygon));
             polygon = GeometryCollection();
         }
 
         polygon.emplace_back(ring);
+        mbgl::Log::Info(mbgl::Event::General,
+                        "debug classifyRings insert to polygon:" + mbgl::util::toString(polygons.size()) +
+                        ", ring point size: " +  mbgl::util::toString(ring.size()));
     }
 
     if (!polygon.empty()) {
         polygons.emplace_back(std::move(polygon));
     }
 
-    mbgl::Log::Info(mbgl::Event::General, "debug classifyRings end all rings: " + mbgl::util::toString(polygons.size()));
+    mbgl::Log::Info(mbgl::Event::General,
+                    "debug classifyRings end polygon size: " + mbgl::util::toString(polygons.size()));
 
     return polygons;
 }

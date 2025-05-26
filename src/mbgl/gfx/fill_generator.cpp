@@ -131,26 +131,39 @@ void generateFillAndOutineBuffers(const GeometryCollection& geometry,
                                   SegmentVector<FillAttributes>& fillSegments,
                                   gfx::IndexVector<gfx::Lines>& lineIndexes,
                                   SegmentVector<FillAttributes>& lineSegments) {
+    mbgl::Log::Info(mbgl::Event::General, "debug generateFillAndOutineBuffers begin");
     for (auto& polygon : classifyRings(geometry)) {
+        mbgl::Log::Info(mbgl::Event::General,
+                        "debug generateFillAndOutineBuffers ring size:" + mbgl::util::toString(polygon.size()));
         // Optimize polygons with many interior rings for earcut tesselation.
         limitHoles(polygon, 500);
 
         std::size_t totalVertices = totalVerticesCheck(polygon);
         std::size_t startVertices = vertices.elements();
+        bool debug = false;
 
         for (const auto& ring : polygon) {
             std::size_t base = vertices.elements();
             std::size_t nVertices = addRingVertices(vertices, ring);
             addOutlineIndices(base, nVertices, lineSegments, lineIndexes);
-            if (ring.size() > 100)
+            if (ring.size() == 444)
             {
-                mbgl::Log::Info(mbgl::Event::General, "Debug generateFillAndOutineBuffers ring size: " + mbgl::util::toString(ring.size()) + "vertices: " + mbgl::util::toString(nVertices));
+                debug = true;
             }
         }
 
         std::vector<uint32_t> indices = mapbox::earcut(polygon);
         addFillIndices(fillSegments, fillIndexes, indices, startVertices, totalVertices);
+        if (debug)
+        {
+            mbgl::Log::Info(mbgl::Event::General,
+                            "Debug ring size:" + mbgl::util::toString(polygon.size()) +
+                            ", indices size: " +  mbgl::util::toString(indices.size()) +
+                            ", vertices: " + mbgl::util::toString(totalVertices));
+        }
     }
+
+    mbgl::Log::Info(mbgl::Event::General, "debug generateFillAndOutineBuffers end");
 }
 
 void generateFillAndOutineBuffers(const GeometryCollection& geometry,
